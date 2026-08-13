@@ -29,7 +29,8 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewTokenGenerator(cfg *TokenConfig) *TokenGenerator {
+func NewTokenGenerator(cfg *TokenConfig, serviceName string) *TokenGenerator {
+	cfg.issuer = serviceName
 	return &TokenGenerator{
 		config: cfg,
 	}
@@ -52,6 +53,10 @@ func (c *TokenGenerator) generateToken(key *rsa.PrivateKey, userID, iss string, 
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return token.SignedString(key)
+}
+
+func (c *TokenGenerator) GetIssuer() string {
+	return c.config.issuer
 }
 
 func (c *TokenGenerator) GenerateAccessToken(userID, iss string) (string, error) {

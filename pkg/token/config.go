@@ -17,10 +17,10 @@ type TokenConfig struct {
 	RefreshTokenPublicKey  *rsa.PublicKey
 	AccessTokenTTL         time.Duration
 	RefreshTokenTTL        time.Duration
-	Issuer                 string
+	issuer                 string
 }
 
-func NewTokenConfig(service string) (*TokenConfig, error) {
+func NewTokenConfig() (*TokenConfig, error) {
 	accessPrivPEM := envreader.Read("ACCESS_TOKEN_PRIVATE_KEY", "")
 	accessPubPEM := envreader.Read("ACCESS_TOKEN_PUBLIC_KEY", "")
 	refreshPrivPEM := envreader.Read("REFRESH_TOKEN_PRIVATE_KEY", "")
@@ -53,6 +53,5 @@ func NewTokenConfig(service string) (*TokenConfig, error) {
 		RefreshTokenPublicKey:  refreshPub,
 		AccessTokenTTL:         15 * time.Minute,
 		RefreshTokenTTL:        7 * 24 * time.Hour,
-		Issuer:                 service,
 	}, nil
 }
