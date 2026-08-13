@@ -21,12 +21,17 @@ type ITokenGenerator interface {
 }
 
 type ITokenValidator interface {
-	ValidateToken(string, TokenType) bool
-	GetUserID(string) (string, error)
+	ValidateToken(string, TokenType) (*Claims, error)
 }
 type JWTClaims struct {
 	UserID string
+	Email  string
 	jwt.RegisteredClaims
+}
+
+type Claims struct {
+	UserID string `json:"userID"`
+	Email  string `json:"email"`
 }
 
 func NewTokenGenerator(cfg *TokenConfig, serviceName string) *TokenGenerator {
@@ -41,9 +46,10 @@ func NewTokenValidator(cfg *TokenConfig) *TokenValidator {
 		config: cfg,
 	}
 }
-func (c *TokenGenerator) generateToken(key *rsa.PrivateKey, userID, iss string, exp time.Duration) (string, error) {
+func (c *TokenGenerator) generateToken(key *rsa.PrivateKey, userID, iss, email string, exp time.Duration) (string, error) {
 	claims := JWTClaims{
 		UserID: userID,
+		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(exp)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
@@ -59,16 +65,16 @@ func (c *TokenGenerator) GetIssuer() string {
 	return c.config.issuer
 }
 
-func (c *TokenGenerator) GenerateAccessToken(userID, iss string) (string, error) {
-	token, err := c.generateToken(c.config.AccessTokenPrivateKey, userID, iss, c.config.AccessTokenTTL)
+func (c *TokenGenerator) GenerateAccessToken(userID, iss, email string) (string, error) {
+	token, err := c.generateToken(c.config.AccessTokenPrivateKey, userID, iss, email, c.config.AccessTokenTTL)
 	if err != nil {
 		return "", err
 	}
 	return token, nil
 }
 
-func (c *TokenGenerator) GenerateRefreshToken(userID, iss string) (string, error) {
-	token, err := c.generateToken(c.config.RefreshTokenPrivateKey, userID, iss, c.config.RefreshTokenTTL)
+func (c *TokenGenerator) GenerateRefreshToken(userID, iss, email string) (string, error) {
+	token, err := c.generateToken(c.config.RefreshTokenPrivateKey, userID, iss, email, c.config.RefreshTokenTTL)
 	if err != nil {
 		return "", err
 	}
@@ -94,22 +100,17 @@ func (v *TokenValidator) parseToken(jwtToken string, tokenType TokenType) (*jwt.
 	return token, nil
 }
 
-func (v *TokenValidator) ValidateToken(jwtToken string, tokenType TokenType) bool {
+func (v *TokenValidator) ValidateToken(jwtToken string, tokenType TokenType) (*Claims, error) {
 	token, err := v.parseToken(jwtToken, tokenType)
 	if err != nil || !token.Valid {
-		return false
-	}
-	return true
-}
-
-func (v *TokenValidator) GetUserID(jwtToken string) (string, error) {
-	token, err := v.parseToken(jwtToken, Access)
-	if err != nil || !token.Valid {
-		return "", err
+		return nil, err
 	}
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
-		return "", ErrInvalidClaims
+		return nil, ErrInvalidClaims
 	}
-	return claims.UserID, nil
+	return &Claims{
+		UserID: claims.UserID,
+		Email:  claims.Email,
+	}, nil
 }

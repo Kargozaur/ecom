@@ -36,7 +36,7 @@ func testConfig(t *testing.T) *token.TokenConfig {
 func TestGenerateAccessToken_Success(t *testing.T) {
 	cfg := testConfig(t)
 	gen := token.NewTokenGenerator(cfg, "iss")
-	token, err := gen.GenerateAccessToken("user-123", gen.GetIssuer())
+	token, err := gen.GenerateAccessToken("user-123", gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v\n", err)
 	}
@@ -48,7 +48,7 @@ func TestGenerateAccessToken_Success(t *testing.T) {
 func TestGenerateRefreshToken_Success(t *testing.T) {
 	cfg := testConfig(t)
 	gen := token.NewTokenGenerator(cfg, "iss")
-	token, err := gen.GenerateRefreshToken("user-123", gen.GetIssuer())
+	token, err := gen.GenerateRefreshToken("user-123", gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v\n", err)
 	}
@@ -60,7 +60,7 @@ func TestGeneratedToken_UsesRS256(t *testing.T) {
 	cfg := testConfig(t)
 	gen := token.NewTokenGenerator(cfg, "iss")
 
-	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer())
+	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestGeneratedToken_ContainsCorrectClaims(t *testing.T) {
 	gen := token.NewTokenGenerator(cfg, "iss")
 
 	before := time.Now().UTC()
-	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer())
+	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -104,12 +104,12 @@ func TestValidateToken_ValidAccessToken(t *testing.T) {
 	gen := token.NewTokenGenerator(cfg, "iss")
 	val := token.NewTokenValidator(cfg)
 
-	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer())
+	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !val.ValidateToken(tokenStr, token.Access) {
+	if _, err := val.ValidateToken(tokenStr, token.Access); err != nil {
 		t.Fatal("expected token to be valid")
 	}
 }
@@ -119,12 +119,12 @@ func TestValidateToken_ValidRefreshToken(t *testing.T) {
 	gen := token.NewTokenGenerator(cfg, "iss")
 	val := token.NewTokenValidator(cfg)
 
-	tokenStr, err := gen.GenerateRefreshToken("user-123", gen.GetIssuer())
+	tokenStr, err := gen.GenerateRefreshToken("user-123", gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !val.ValidateToken(tokenStr, token.Refresh) {
+	if _, err := val.ValidateToken(tokenStr, token.Refresh); err != nil {
 		t.Fatal("expected token to be valid")
 	}
 }
@@ -134,12 +134,12 @@ func TestValidateToken_WrongTokenType(t *testing.T) {
 	gen := token.NewTokenGenerator(cfg, "iss")
 	val := token.NewTokenValidator(cfg)
 
-	tokenStr, err := gen.GenerateAccessToken("user-123", "iss")
+	tokenStr, err := gen.GenerateAccessToken("user-123", "iss", "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if val.ValidateToken(tokenStr, token.Refresh) {
+	if _, err := val.ValidateToken(tokenStr, token.Refresh); err == nil {
 		t.Fatal("expected validation to fail: access token checked against refresh key")
 	}
 }
@@ -150,12 +150,12 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	gen := token.NewTokenGenerator(cfg, "iss")
 	val := token.NewTokenValidator(cfg)
 
-	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer())
+	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if val.ValidateToken(tokenStr, token.Access) {
+	if _, err := val.ValidateToken(tokenStr, token.Access); err == nil {
 		t.Fatal("expected expired token to be invalid")
 	}
 }
@@ -166,12 +166,12 @@ func TestValidateToken_SignedWithWrongKey(t *testing.T) {
 	otherCfg := testConfig(t)
 	otherGen := token.NewTokenGenerator(otherCfg, "iss")
 
-	tokenStr, err := otherGen.GenerateAccessToken("user-123", "iss")
+	tokenStr, err := otherGen.GenerateAccessToken("user-123", "iss", "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if val.ValidateToken(tokenStr, token.Access) {
+	if _, err := val.ValidateToken(tokenStr, token.Access); err == nil {
 		t.Fatal("expected token signed with foreign key to be invalid")
 	}
 }
@@ -179,7 +179,7 @@ func TestValidateToken_MalformedToken(t *testing.T) {
 	cfg := testConfig(t)
 	val := token.NewTokenValidator(cfg)
 
-	if val.ValidateToken("not.a.token", token.Access) {
+	if _, err := val.ValidateToken("not.a.token", token.Access); err == nil {
 		t.Fatal("expected token to be invalid")
 	}
 }
@@ -203,7 +203,7 @@ func TestValidateToken_RejectsAlgConfusion(t *testing.T) {
 		t.Fatalf("failed to sign token: %v", err)
 	}
 
-	if val.ValidateToken(tokenStr, token.Access) {
+	if _, err := val.ValidateToken(tokenStr, token.Access); err == nil {
 		t.Fatal("was expecting rejection")
 	}
 }
@@ -213,15 +213,16 @@ func TestGetUserID_Success(t *testing.T) {
 	val := token.NewTokenValidator(cfg)
 
 	uID := "user-123"
-	tokenStr, err := gen.GenerateAccessToken(uID, gen.GetIssuer())
+	tokenStr, err := gen.GenerateAccessToken(uID, gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userID, err := val.GetUserID(tokenStr)
+	claims, err := val.ValidateToken(tokenStr, token.Access)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	userID := claims.UserID
 	if userID != uID {
 		t.Errorf("expected user-123, got %s", userID)
 	}
@@ -232,12 +233,12 @@ func TestGetUserID_ExpiredToken(t *testing.T) {
 	gen := token.NewTokenGenerator(cfg, "iss")
 	val := token.NewTokenValidator(cfg)
 
-	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer())
+	tokenStr, err := gen.GenerateAccessToken("user-123", gen.GetIssuer(), "some email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	_, err = val.GetUserID(tokenStr)
+	_, err = val.ValidateToken(tokenStr, token.Access)
 	if err == nil {
 		t.Fatal("expected error for expired token")
 	}
