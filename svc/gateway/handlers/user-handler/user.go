@@ -3,6 +3,7 @@ package userhandler
 import (
 	"errors"
 	userstructs "gateway/handlers/user-handler/user-structs"
+	"gateway/middleware"
 	"net/http"
 	"pkg/json"
 	userv1 "proto/out/user/v1"
@@ -35,4 +36,20 @@ func (u *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.Write(w, http.StatusCreated, map[string]string{"response": resp.GetResponse()})
+}
+
+func (u *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	token := r.Context().Value(middleware.ClaimsKey).(string)
+	data := &userv1.GetProfileRequest{Jwt: token}
+	req, err := u.userClient.GetProfile(r.Context(), data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	responseBody := &userstructs.Profile{
+		Email:        req.GetEmail(),
+		Name:         req.GetName(),
+		RegisterData: req.GetDate(),
+	}
+	json.Write(w, http.StatusOK, responseBody)
 }

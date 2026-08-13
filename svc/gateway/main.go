@@ -5,6 +5,7 @@ import (
 	"gateway/handlers/health"
 	"log"
 	"net/http"
+	"pkg/token"
 	"time"
 
 	"google.golang.org/grpc"
@@ -12,8 +13,10 @@ import (
 )
 
 func srvConfig(clients *grpcClients) *http.Server {
+	cfg, _ := token.NewTokenConfig()
+	validator := token.NewTokenValidator(cfg)
 	mux := http.NewServeMux()
-	handlers.RegisterUserHandler(mux, clients.userClient)
+	handlers.RegisterUserHandler(mux, clients.userClient, validator)
 	health.Health(mux)
 	timeoutHandler := http.TimeoutHandler(mux, 10*time.Second, "Request timed out")
 	srv := &http.Server{
