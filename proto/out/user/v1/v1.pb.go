@@ -171,9 +171,10 @@ func (x *GetProfileRequest) GetJwt() string {
 
 type GetProfileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Date          string                 `protobuf:"bytes,3,opt,name=date,proto3" json:"date,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Date          string                 `protobuf:"bytes,4,opt,name=date,proto3" json:"date,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -206,6 +207,13 @@ func (x *GetProfileResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetProfileResponse.ProtoReflect.Descriptor instead.
 func (*GetProfileResponse) Descriptor() ([]byte, []int) {
 	return file_user_v1_v1_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetProfileResponse) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *GetProfileResponse) GetEmail() string {
@@ -241,11 +249,12 @@ const file_user_v1_v1_proto_rawDesc = "" +
 	"\x14RegisterUserResponse\x12\x1a\n" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\"%\n" +
 	"\x11GetProfileRequest\x12\x10\n" +
-	"\x03jwt\x18\x01 \x01(\tR\x03jwt\"R\n" +
-	"\x12GetProfileResponse\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
-	"\x04date\x18\x03 \x01(\tR\x04date2\xa1\x01\n" +
+	"\x03jwt\x18\x01 \x01(\tR\x03jwt\"b\n" +
+	"\x12GetProfileResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
+	"\x04date\x18\x04 \x01(\tR\x04date2\xa1\x01\n" +
 	"\vUserService\x12K\n" +
 	"\fRegisterUser\x12\x1c.user.v1.RegisterUserRequest\x1a\x1d.user.v1.RegisterUserResponse\x12E\n" +
 	"\n" +

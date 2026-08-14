@@ -1,0 +1,11 @@
+version: "2"
+sql:
+  - name: "user_service"
+    queries: "./queries/user/queries.sql"
+    engine: "postgresql"
+    schema: "./migrations/user/00001_user_db.sql"
+    gen:
+        go:
+            package: "db"
+            out: "./svc/reg/db"
+            sql_package: "pgx/v5"

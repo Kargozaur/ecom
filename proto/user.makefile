@@ -1,5 +1,6 @@
-.PHONY: user
-user:
+.PHONY: user-grpc
+
+user-grpc:
 	cd proto && protoc \
 	--proto_path=. \
 	--go_out=out \

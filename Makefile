@@ -1,4 +1,4 @@
-.PHONY: user
+.PHONY: user-grpc
 
 include proto/user.makefile
-include svc/gateway.makefile
+include svc/gateway/gateway.makefile
