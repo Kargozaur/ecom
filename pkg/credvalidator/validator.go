@@ -1,55 +1,104 @@
 package credvalidator
 
 import (
-	"errors"
 	"net/mail"
 	"unicode"
 )
 
-func ValidateEmail(email string) error {
-	_, err := mail.ParseAddress(email)
-	return err
+type PasswordPolicy struct {
+	policies []func(string) error
 }
 
-func ValidatePassword(pwd string) []error {
-	errs := make([]error, 0, 4)
-	var isUpper, isSpecial, isLong, isNumber bool
-	if len(pwd) >= 8 {
-		isLong = true
+var DefaultPasswordPolicy = CreatePasswordPolicies(HasSpec, IsLong(8), IsNumber, IsUpper)
+
+func CreatePasswordPolicies(f ...func(string) error) PasswordPolicy {
+	funcs := make([]func(string) error, 0, len(f))
+	funcs = append(funcs, f...)
+	return PasswordPolicy{policies: funcs}
+}
+
+func (p PasswordPolicy) GetPolicices() []func(string) error {
+	return p.policies
+}
+func (p PasswordPolicy) ApplyPolicies(pwd string) []error {
+	l := len(p.policies)
+	if l == 0 {
+		return nil
 	}
-	for _, ch := range pwd {
-		switch true {
-		case unicode.IsUpper(ch):
-			isUpper = true
-			continue
-		case spec(ch):
-			isSpecial = true
-			continue
-		case unicode.IsNumber(ch):
-			isNumber = true
-			continue
+	errs := make([]error, 0, l)
+	for i := range l {
+		if err := p.policies[i](pwd); err != nil {
+			errs = append(errs, err)
 		}
-	}
-	if !isUpper {
-		errs = append(errs, errors.New("Password must contain at least 1 upper character."))
-	}
-	if !isSpecial {
-		errs = append(errs, errors.New("Password must contain at least 1 speacial character."))
-	}
-	if !isLong {
-		errs = append(errs, errors.New("Password must be at least 8 characters long."))
-	}
-	if !isNumber {
-		errs = append(errs, errors.New("Password must contain at least 1 number."))
 	}
 	return errs
 }
 
-func spec(ch rune) bool {
-	switch ch {
-	case '`', '@', '!', '#', '$', '%', '^', '&', '*', '(', ')', '_', '-', '=', '+', ';', ':', '.', ',', '"', '>', '<', '/':
-		return true
-	default:
-		return false
+func ValidateEmail(email string) error {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return ErrEmailNotValid
 	}
+	return nil
+}
+
+func HasSpec(pwd string) error {
+	var found bool
+	for _, ch := range pwd {
+		switch ch {
+		case '`', '@', '!', '#', '$', '%', '^', '&', '*', '(', ')', '_', '-', '=', '+', ';', ':', '.', ',', '"', '>', '<', '/':
+			found = true
+		}
+		if found {
+			break
+		}
+	}
+	if !found {
+		return ErrPasswordNoSpecial
+	}
+	return nil
+}
+
+// Policy enforces passwords to be at least 8 characters long.
+// If given minLen will be less than 8
+// function returns ErrMinLenForFuncsIsTooShort.
+// Otherwise, either ErrPasswordIsTooShort or nil.
+func IsLong(minLen int) func(string) error {
+	if minLen < 8 {
+		return func(string) error { return ErrMinLenForFuncIsTooShort }
+	}
+	return func(pwd string) error {
+		if len(pwd) < minLen {
+			return ErrPasswordIsTooShort
+		}
+		return nil
+	}
+}
+
+func IsUpper(pwd string) error {
+	var found bool
+	for _, ch := range pwd {
+		if unicode.IsUpper(ch) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return ErrPasswordNoUpper
+	}
+	return nil
+}
+
+func IsNumber(pwd string) error {
+	var found bool
+	for _, ch := range pwd {
+		if unicode.IsNumber(ch) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return ErrPasswordNoNumber
+	}
+	return nil
 }
