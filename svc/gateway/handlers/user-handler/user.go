@@ -15,9 +15,9 @@ type UserHandler struct {
 	Policies   *credvalidator.PasswordPolicy
 }
 
-func NewUserHandler(cl userv1.UserServiceClient, p *credvalidator.PasswordPolicy) *UserHandler {
+func NewUserHandler(cl userv1.UserServiceClient, p credvalidator.PasswordPolicy) *UserHandler {
 	return &UserHandler{userClient: cl,
-		Policies: p}
+		Policies: &p}
 }
 
 func (u *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {

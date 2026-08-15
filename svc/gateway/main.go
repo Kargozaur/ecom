@@ -17,7 +17,7 @@ func srvConfig(clients *grpcClients) *http.Server {
 	validator := token.NewTokenValidator(cfg)
 	mux := http.NewServeMux()
 	pwdPolicies := CreatePolicies()
-	handlers.RegisterUserHandler(mux, clients.userClient, validator, &pwdPolicies)
+	handlers.RegisterUserHandler(mux, clients.userClient, validator, pwdPolicies)
 	health.Health(mux)
 	timeoutHandler := http.TimeoutHandler(mux, 10*time.Second, "Request timed out")
 	srv := &http.Server{
