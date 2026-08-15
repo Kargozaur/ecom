@@ -5,16 +5,19 @@ import (
 	userstructs "gateway/handlers/user-handler/user-structs"
 	"gateway/middleware"
 	"net/http"
+	"pkg/credvalidator"
 	"pkg/json"
 	userv1 "proto/out/user/v1"
 )
 
 type UserHandler struct {
 	userClient userv1.UserServiceClient
+	Policies   *credvalidator.PasswordPolicy
 }
 
-func NewUserHandler(cl userv1.UserServiceClient) *UserHandler {
-	return &UserHandler{userClient: cl}
+func NewUserHandler(cl userv1.UserServiceClient, p *credvalidator.PasswordPolicy) *UserHandler {
+	return &UserHandler{userClient: cl,
+		Policies: p}
 }
 
 func (u *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +26,7 @@ func (u *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to parse request body "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	errs := body.ValidateData()
+	errs := body.ValidateData(u.Policies)
 	if len(errs) != 0 {
 		err := errors.Join(errs...)
 		http.Error(w, err.Error(), http.StatusBadRequest)

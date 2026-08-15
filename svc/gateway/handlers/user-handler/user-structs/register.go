@@ -8,13 +8,13 @@ type Register struct {
 	Name     string `json:"name"`
 }
 
-func (r *Register) ValidateData() []error {
+func (r *Register) ValidateData(policy *credvalidator.PasswordPolicy) []error {
 	errs := make([]error, 0, 5)
 	emailErr := credvalidator.ValidateEmail(r.Email)
 	if emailErr != nil {
 		errs = append(errs, emailErr)
 	}
-	pwdErr := credvalidator.ValidatePassword(r.Password)
+	pwdErr := policy.ApplyPolicies(r.Password)
 	if len(pwdErr) != 0 {
 		errs = append(errs, pwdErr...)
 	}
