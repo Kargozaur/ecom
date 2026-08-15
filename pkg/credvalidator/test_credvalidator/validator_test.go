@@ -3,7 +3,7 @@ package credvalidator_test
 import (
 	"errors"
 	"pkg/credvalidator"
-	"slices"
+	"strings"
 	"testing"
 )
 
@@ -27,9 +27,9 @@ func TestHasSpec(t *testing.T) {
 	}
 }
 
-func TestIsLong(t *testing.T) {
+func TestIsShort(t *testing.T) {
 	t.Run("returns error func when minLen below 8", func(t *testing.T) {
-		fn := credvalidator.IsLong(7)
+		fn := credvalidator.IsShort(7)
 		if err := fn("anything, doesn't matter"); !errors.Is(err, credvalidator.ErrMinLenForFuncIsTooShort) {
 			t.Errorf("IsLong(7)(...) = %v, want %v", err, credvalidator.ErrMinLenForFuncIsTooShort)
 		}
@@ -51,7 +51,7 @@ func TestIsLong(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				fn := credvalidator.IsLong(tt.minLen)
+				fn := credvalidator.IsShort(tt.minLen)
 				if got := fn(tt.pwd); got != tt.want {
 					t.Errorf("IsLong(%d)(%q) = %v, want %v", tt.minLen, tt.pwd, got, tt.want)
 				}
@@ -139,10 +139,6 @@ func TestCreatePasswordPolicies(t *testing.T) {
 		}
 	})
 
-	// Regression test: CreatePasswordPolicies used to build its slice with
-	// make([]func(string) error, 0, len(f)) and then copy(funcs, f), which
-	// copies zero elements because len(funcs) == 0. That silently produced
-	// an empty policy set no matter how many funcs were passed in.
 	t.Run("policies are actually usable after creation", func(t *testing.T) {
 		p := credvalidator.CreatePasswordPolicies(alwaysFail)
 		errs := p.ApplyPolicies("irrelevant")
@@ -183,31 +179,132 @@ func TestDefaultPasswordPolicy(t *testing.T) {
 		pwd      string
 		wantErrs []error
 	}{
-		{"valid password", "Abcdef1@", nil},
-		{"missing upper", "abcdef1@", []error{credvalidator.ErrPasswordNoUpper}},
-		{"missing special", "Abcdef12", []error{credvalidator.ErrPasswordNoSpecial}},
-		{"missing number", "Abcdefg@", []error{credvalidator.ErrPasswordNoNumber}},
-		{"too short", "Ab1@", []error{credvalidator.ErrPasswordIsTooShort}},
 		{
-			"empty string",
-			"",
-			[]error{credvalidator.ErrPasswordNoSpecial, credvalidator.ErrPasswordIsTooShort,
-				credvalidator.ErrPasswordNoNumber, credvalidator.ErrPasswordNoUpper},
+			name:     "valid password",
+			pwd:      "Abcdef1@",
+			wantErrs: nil,
+		},
+		{
+			name: "missing uppercase",
+			pwd:  "abcdef1@",
+			wantErrs: []error{
+				credvalidator.ErrPasswordNoUpper,
+			},
+		},
+		{
+			name: "missing special character",
+			pwd:  "Abcdef12",
+			wantErrs: []error{
+				credvalidator.ErrPasswordNoSpecial,
+			},
+		},
+		{
+			name: "missing number",
+			pwd:  "Abcdefg@",
+			wantErrs: []error{
+				credvalidator.ErrPasswordNoNumber,
+			},
+		},
+		{
+			name: "too short",
+			pwd:  "Ab1@",
+			wantErrs: []error{
+				credvalidator.ErrPasswordIsTooShort,
+			},
+		},
+		{
+			name: "too long",
+			pwd:  strings.Repeat("A", 127) + "1@",
+			wantErrs: []error{
+				credvalidator.ErrPasswordIsTooLong,
+			},
+		},
+		{
+			name:     "exactly maximum length",
+			pwd:      strings.Repeat("A", 126) + "1@",
+			wantErrs: nil,
+		},
+		{
+			name: "empty password",
+			pwd:  "",
+			wantErrs: []error{
+				credvalidator.ErrPasswordIsEmpty,
+				credvalidator.ErrPasswordIsTooShort,
+				credvalidator.ErrPasswordNoSpecial,
+				credvalidator.ErrPasswordNoNumber,
+				credvalidator.ErrPasswordNoUpper,
+			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			errs := credvalidator.DefaultPasswordPolicy.ApplyPolicies(tt.pwd)
+
 			if len(errs) != len(tt.wantErrs) {
-				t.Fatalf("ApplyPolicies(%q) returned %d errors, want %d (errs: %v)",
-					tt.pwd, len(errs), len(tt.wantErrs), errs)
+				t.Fatalf(
+					"ApplyPolicies(%q) returned %d errors, want %d: %v",
+					tt.pwd,
+					len(errs),
+					len(tt.wantErrs),
+					errs,
+				)
 			}
-			for _, want := range tt.wantErrs {
-				found := slices.Contains(errs, want)
-				if !found {
-					t.Errorf("ApplyPolicies(%q) missing expected error %v, got: %v", tt.pwd, want, errs)
+
+			for i, want := range tt.wantErrs {
+				if !errors.Is(errs[i], want) {
+					t.Errorf(
+						"ApplyPolicies(%q) error[%d] = %v, want %v",
+						tt.pwd,
+						i,
+						errs[i],
+						want,
+					)
 				}
 			}
 		})
 	}
+}
+func TestIsLong(t *testing.T) {
+	t.Run("returns error func when maxLen above 128", func(t *testing.T) {
+		fn := credvalidator.IsLong(129)
+
+		if err := fn("anything"); !errors.Is(err, credvalidator.ErrMaxLenForFuncIsTooLong) {
+			t.Errorf(
+				"IsLong(129)(...) = %v, want %v",
+				err,
+				credvalidator.ErrMaxLenForFuncIsTooLong,
+			)
+		}
+	})
+	t.Run("valid maxLen enforces length", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			maxLen int
+			pwd    string
+			want   error
+		}{
+			{"too long", 8, "123456789", credvalidator.ErrPasswordIsTooLong},
+			{"exactly maxLen", 8, "12345678", nil},
+			{"shorter than maxLen", 8, "1234567", nil},
+			{"empty string", 8, "", nil},
+			{"custom maxLen exceeded", 12, "1234567890123", credvalidator.ErrPasswordIsTooLong},
+			{"custom maxLen satisfied", 12, "123456789012", nil},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				fn := credvalidator.IsLong(tt.maxLen)
+
+				if got := fn(tt.pwd); got != tt.want {
+					t.Errorf(
+						"IsLong(%d)(%q) = %v, want %v",
+						tt.maxLen,
+						tt.pwd,
+						got,
+						tt.want,
+					)
+				}
+			})
+		}
+	})
 }
