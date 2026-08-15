@@ -9,7 +9,7 @@ type Register struct {
 }
 
 func (r *Register) ValidateData(policy credvalidator.PasswordPolicy) []error {
-	errs := make([]error, 0, 5)
+	errs := make([]error, 0, len(policy.GetPolicices()))
 	emailErr := credvalidator.ValidateEmail(r.Email)
 	if emailErr != nil {
 		errs = append(errs, emailErr)
