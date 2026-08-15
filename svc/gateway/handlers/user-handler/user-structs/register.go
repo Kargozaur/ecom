@@ -8,7 +8,7 @@ type Register struct {
 	Name     string `json:"name"`
 }
 
-func (r *Register) ValidateData(policy *credvalidator.PasswordPolicy) []error {
+func (r *Register) ValidateData(policy credvalidator.PasswordPolicy) []error {
 	errs := make([]error, 0, 5)
 	emailErr := credvalidator.ValidateEmail(r.Email)
 	if emailErr != nil {

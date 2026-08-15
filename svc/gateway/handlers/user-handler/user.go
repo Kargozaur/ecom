@@ -12,12 +12,11 @@ import (
 
 type UserHandler struct {
 	userClient userv1.UserServiceClient
-	Policies   *credvalidator.PasswordPolicy
+	Policies   credvalidator.PasswordPolicy
 }
 
 func NewUserHandler(cl userv1.UserServiceClient, p credvalidator.PasswordPolicy) *UserHandler {
-	return &UserHandler{userClient: cl,
-		Policies: &p}
+	return &UserHandler{userClient: cl, Policies: p}
 }
 
 func (u *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
