@@ -32,7 +32,7 @@ func (p PasswordPolicy) ApplyPolicies(pwd string) []error {
 	errs := make([]error, 0, l)
 	for i := range l {
 		if err := p.policies[i](pwd); err != nil {
-			if errors.Is(err, ErrPasswordIsTooLong) {
+			if errors.Is(err, ErrPasswordIsTooLong) || errors.Is(err, ErrPasswordIsEmpty) {
 				errs = append(errs, err)
 				break
 			}

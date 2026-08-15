@@ -229,10 +229,6 @@ func TestDefaultPasswordPolicy(t *testing.T) {
 			pwd:  "",
 			wantErrs: []error{
 				credvalidator.ErrPasswordIsEmpty,
-				credvalidator.ErrPasswordIsTooShort,
-				credvalidator.ErrPasswordNoSpecial,
-				credvalidator.ErrPasswordNoNumber,
-				credvalidator.ErrPasswordNoUpper,
 			},
 		},
 	}
