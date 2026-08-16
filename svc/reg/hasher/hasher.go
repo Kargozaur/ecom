@@ -27,24 +27,15 @@ type Hasher struct {
 	params *Argon2Params
 }
 
-func NewArgon2Hasher(params *Argon2Params) (*Hasher, error) {
-	if params == nil {
-		defaultParams := &Argon2Params{
-			Memory:      64 * 1024,
-			Iterations:  3,
-			Parallelism: 2,
-			SaltLength:  16,
-			KeyLength:   32,
-		}
-		return &Hasher{params: defaultParams}, nil
-	} else if params.Iterations == 0 ||
-		params.KeyLength == 0 ||
-		params.Memory == 0 ||
-		params.SaltLength == 0 ||
-		params.Parallelism == 0 {
-		return nil, ErrInitFuncParams
+func NewArgon2Hasher() (*Hasher, error) {
+	defaultParams := &Argon2Params{
+		Memory:      64 * 1024,
+		Iterations:  3,
+		Parallelism: 2,
+		SaltLength:  16,
+		KeyLength:   32,
 	}
-	return &Hasher{params: params}, nil
+	return &Hasher{params: defaultParams}, nil
 }
 
 func (h *Hasher) Hash(password string) (string, error) {
