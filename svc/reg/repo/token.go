@@ -15,12 +15,15 @@ type refreshRepo struct {
 }
 
 func (r *refreshRepo) CreateToken(ctx context.Context, id uuid.UUID, tokenHash string) error {
+	tx, _ := r.db.BeginTx(ctx, pgx.TxOptions{})
+	defer tx.Rollback(ctx)
 	params := db.CreateTokenParams{UserID: pgtype.UUID{Bytes: id, Valid: true},
 		TokenHash: pgtype.Text{String: tokenHash, Valid: true}}
 	err := r.queries.CreateToken(ctx, params)
 	if err != nil {
 		return err
 	}
+	tx.Commit(ctx)
 	return nil
 }
 
