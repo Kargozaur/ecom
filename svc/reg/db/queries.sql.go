@@ -11,10 +11,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createToken = `-- name: CreateToken :one
+const createToken = `-- name: CreateToken :exec
 insert into refresh_tokens (user_id, token_hash)
 values($1, $2)
-returning id, created_at
 `
 
 type CreateTokenParams struct {
@@ -22,16 +21,9 @@ type CreateTokenParams struct {
 	TokenHash pgtype.Text
 }
 
-type CreateTokenRow struct {
-	ID        pgtype.UUID
-	CreatedAt pgtype.Timestamptz
-}
-
-func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (CreateTokenRow, error) {
-	row := q.db.QueryRow(ctx, createToken, arg.UserID, arg.TokenHash)
-	var i CreateTokenRow
-	err := row.Scan(&i.ID, &i.CreatedAt)
-	return i, err
+func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) error {
+	_, err := q.db.Exec(ctx, createToken, arg.UserID, arg.TokenHash)
+	return err
 }
 
 const createUser = `-- name: CreateUser :one
@@ -75,24 +67,44 @@ func (q *Queries) DeleteToken(ctx context.Context, arg DeleteTokenParams) error 
 	return err
 }
 
-const getProfile = `-- name: GetProfile :one
-select id, email, name, created_at from users
+const fetchPassword = `-- name: FetchPassword :one
+select id, email, password_hash from users
+where email = $1
+`
+
+type FetchPasswordRow struct {
+	ID           pgtype.UUID
+	Email        string
+	PasswordHash string
+}
+
+func (q *Queries) FetchPassword(ctx context.Context, email string) (FetchPasswordRow, error) {
+	row := q.db.QueryRow(ctx, fetchPassword, email)
+	var i FetchPasswordRow
+	err := row.Scan(&i.ID, &i.Email, &i.PasswordHash)
+	return i, err
+}
+
+const fetchProfile = `-- name: FetchProfile :one
+select id, email, password_hash, name, created_at from users
 where id = $1
 `
 
-type GetProfileRow struct {
-	ID        pgtype.UUID
-	Email     string
-	Name      string
-	CreatedAt pgtype.Date
+type FetchProfileRow struct {
+	ID           pgtype.UUID
+	Email        string
+	PasswordHash string
+	Name         string
+	CreatedAt    pgtype.Date
 }
 
-func (q *Queries) GetProfile(ctx context.Context, id pgtype.UUID) (GetProfileRow, error) {
-	row := q.db.QueryRow(ctx, getProfile, id)
-	var i GetProfileRow
+func (q *Queries) FetchProfile(ctx context.Context, id pgtype.UUID) (FetchProfileRow, error) {
+	row := q.db.QueryRow(ctx, fetchProfile, id)
+	var i FetchProfileRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
+		&i.PasswordHash,
 		&i.Name,
 		&i.CreatedAt,
 	)

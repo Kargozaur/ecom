@@ -28,3 +28,14 @@ message GetProfileResponse {
     string name = 3;
     string date = 4;
 }
+
+message LoginUserRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginUserResponse {
+    string access = 1;
+    string refresh = 2;
+    string type = 3;
+}
