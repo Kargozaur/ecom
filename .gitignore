@@ -2,3 +2,4 @@ gateway
 user
 !gateway/
 .env
+!user/
