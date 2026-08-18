@@ -7,6 +7,7 @@ import (
 	userv1 "proto/out/user/v1"
 	"reg/hasher"
 	"reg/repo"
+	"slices"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -73,7 +74,8 @@ func (s *Service) Login(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if id == "" || email == "" || access == "" || refresh == "" {
+	anyEmpty := slices.Contains([]string{access, email, access, refresh}, "")
+	if anyEmpty {
 		return nil, e
 	}
 	return &userv1.LoginUserResponse{
