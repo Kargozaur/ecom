@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -29,19 +28,14 @@ type FetchProfileResponse struct {
 	CreatedAt time.Time
 }
 
-type userRepo struct {
-	db      *pgx.Conn
-	queries *db.Queries
-}
+type userRepo struct{}
 
-func (u *userRepo) RegisterUser(ctx context.Context, params db.CreateUserParams) (CreateResponse, error) {
-	tx, err := u.db.BeginTx(ctx, pgx.TxOptions{})
-	defer tx.Rollback(ctx)
-	result, err := u.queries.CreateUser(ctx, params)
+func (u *userRepo) RegisterUser(ctx context.Context, queries *db.Queries,
+	params db.CreateUserParams) (CreateResponse, error) {
+	result, err := queries.CreateUser(ctx, params)
 	if err != nil {
 		return CreateResponse{}, err
 	}
-	tx.Commit(ctx)
 	return CreateResponse{
 		ID:        result.ID.String(),
 		Name:      result.Name,
@@ -49,16 +43,17 @@ func (u *userRepo) RegisterUser(ctx context.Context, params db.CreateUserParams)
 	}, nil
 }
 
-func (u *userRepo) LoginUser(ctx context.Context, email string) (db.FetchPasswordRow, error) {
-	res, err := u.queries.FetchPassword(ctx, email)
+func (u *userRepo) LoginUser(ctx context.Context, queries *db.Queries, email string) (db.FetchPasswordRow, error) {
+	res, err := queries.FetchPassword(ctx, email)
 	if err != nil {
 		return db.FetchPasswordRow{}, err
 	}
 	return res, nil
 }
 
-func (u *userRepo) FetchProfile(ctx context.Context, id uuid.UUID) (FetchProfileResponse, error) {
-	result, err := u.queries.FetchProfile(ctx, pgtype.UUID{Bytes: id, Valid: true})
+func (u *userRepo) FetchProfile(ctx context.Context, queries *db.Queries,
+	id uuid.UUID) (FetchProfileResponse, error) {
+	result, err := queries.FetchProfile(ctx, pgtype.UUID{Bytes: id, Valid: true})
 	if err != nil {
 		return FetchProfileResponse{}, err
 	}
