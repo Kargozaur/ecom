@@ -28,7 +28,7 @@ func NewRepositories(pool *pgxpool.Pool) *Repositories {
 
 func (r *Repositories) querier(ctx context.Context) *db.Queries {
 	if tx, ok := ctx.Value(txKey{}).(pgx.Tx); ok {
-		return db.New(tx)
+		return r.queries.WithTx(tx)
 	}
 	return r.queries
 }
