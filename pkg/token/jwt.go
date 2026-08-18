@@ -16,8 +16,8 @@ type TokenValidator struct {
 }
 
 type ITokenGenerator interface {
-	GenerateAccessToken(string, string) (string, error)
-	GenerateRefreshToken(string, string) (string, error)
+	GenerateAccessToken(userID, iss, email string) (string, error)
+	GenerateRefreshToken(userID, iss, email string) (string, error)
 }
 
 type ITokenValidator interface {

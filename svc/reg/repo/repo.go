@@ -70,8 +70,9 @@ func (r *Repositories) LoginUser(ctx context.Context,
 	return res, nil
 }
 
-func (r *Repositories) CreateToken(ctx context.Context, id uuid.UUID, tokenHash string) error {
-	err := r.refresh.CreateToken(ctx, r.querier(ctx), id, tokenHash)
+func (r *Repositories) CreateToken(ctx context.Context, id string, tokenHash string) error {
+	parsedID, _ := uuid.Parse(id)
+	err := r.refresh.CreateToken(ctx, r.querier(ctx), parsedID, tokenHash)
 	if err != nil {
 		return err
 	}
