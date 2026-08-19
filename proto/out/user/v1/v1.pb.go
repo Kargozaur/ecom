@@ -349,6 +349,94 @@ func (x *LoginUserResponse) GetType() string {
 	return ""
 }
 
+type LogoutRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogoutRequest) Reset() {
+	*x = LogoutRequest{}
+	mi := &file_user_v1_v1_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogoutRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogoutRequest) ProtoMessage() {}
+
+func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_v1_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogoutRequest.ProtoReflect.Descriptor instead.
+func (*LogoutRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_v1_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *LogoutRequest) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+type LogoutResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Response      string                 `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogoutResponse) Reset() {
+	*x = LogoutResponse{}
+	mi := &file_user_v1_v1_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogoutResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogoutResponse) ProtoMessage() {}
+
+func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_v1_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogoutResponse.ProtoReflect.Descriptor instead.
+func (*LogoutResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_v1_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *LogoutResponse) GetResponse() string {
+	if x != nil {
+		return x.Response
+	}
+	return ""
+}
+
 var File_user_v1_v1_proto protoreflect.FileDescriptor
 
 const file_user_v1_v1_proto_rawDesc = "" +
@@ -373,11 +461,17 @@ const file_user_v1_v1_proto_rawDesc = "" +
 	"\x11LoginUserResponse\x12\x16\n" +
 	"\x06access\x18\x01 \x01(\tR\x06access\x12\x18\n" +
 	"\arefresh\x18\x02 \x01(\tR\arefresh\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type2\xa1\x01\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\"4\n" +
+	"\rLogoutRequest\x12#\n" +
+	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\",\n" +
+	"\x0eLogoutResponse\x12\x1a\n" +
+	"\bresponse\x18\x01 \x01(\tR\bresponse2\xa0\x02\n" +
 	"\vUserService\x12K\n" +
-	"\fRegisterUser\x12\x1c.user.v1.RegisterUserRequest\x1a\x1d.user.v1.RegisterUserResponse\x12E\n" +
+	"\fRegisterUser\x12\x1c.user.v1.RegisterUserRequest\x1a\x1d.user.v1.RegisterUserResponse\x12B\n" +
+	"\tLoginUser\x12\x19.user.v1.LoginUserRequest\x1a\x1a.user.v1.LoginUserResponse\x12E\n" +
 	"\n" +
-	"GetProfile\x12\x1a.user.v1.GetProfileRequest\x1a\x1b.user.v1.GetProfileResponseB\x1aZ\x18proto/out/user/v1;userv1b\x06proto3"
+	"GetProfile\x12\x1a.user.v1.GetProfileRequest\x1a\x1b.user.v1.GetProfileResponse\x129\n" +
+	"\x06Logout\x12\x16.user.v1.LogoutRequest\x1a\x17.user.v1.LogoutResponseB\x1aZ\x18proto/out/user/v1;userv1b\x06proto3"
 
 var (
 	file_user_v1_v1_proto_rawDescOnce sync.Once
@@ -391,7 +485,7 @@ func file_user_v1_v1_proto_rawDescGZIP() []byte {
 	return file_user_v1_v1_proto_rawDescData
 }
 
-var file_user_v1_v1_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_user_v1_v1_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_user_v1_v1_proto_goTypes = []any{
 	(*RegisterUserRequest)(nil),  // 0: user.v1.RegisterUserRequest
 	(*RegisterUserResponse)(nil), // 1: user.v1.RegisterUserResponse
@@ -399,14 +493,20 @@ var file_user_v1_v1_proto_goTypes = []any{
 	(*GetProfileResponse)(nil),   // 3: user.v1.GetProfileResponse
 	(*LoginUserRequest)(nil),     // 4: user.v1.LoginUserRequest
 	(*LoginUserResponse)(nil),    // 5: user.v1.LoginUserResponse
+	(*LogoutRequest)(nil),        // 6: user.v1.LogoutRequest
+	(*LogoutResponse)(nil),       // 7: user.v1.LogoutResponse
 }
 var file_user_v1_v1_proto_depIdxs = []int32{
 	0, // 0: user.v1.UserService.RegisterUser:input_type -> user.v1.RegisterUserRequest
-	2, // 1: user.v1.UserService.GetProfile:input_type -> user.v1.GetProfileRequest
-	1, // 2: user.v1.UserService.RegisterUser:output_type -> user.v1.RegisterUserResponse
-	3, // 3: user.v1.UserService.GetProfile:output_type -> user.v1.GetProfileResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	4, // 1: user.v1.UserService.LoginUser:input_type -> user.v1.LoginUserRequest
+	2, // 2: user.v1.UserService.GetProfile:input_type -> user.v1.GetProfileRequest
+	6, // 3: user.v1.UserService.Logout:input_type -> user.v1.LogoutRequest
+	1, // 4: user.v1.UserService.RegisterUser:output_type -> user.v1.RegisterUserResponse
+	5, // 5: user.v1.UserService.LoginUser:output_type -> user.v1.LoginUserResponse
+	3, // 6: user.v1.UserService.GetProfile:output_type -> user.v1.GetProfileResponse
+	7, // 7: user.v1.UserService.Logout:output_type -> user.v1.LogoutResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -423,7 +523,7 @@ func file_user_v1_v1_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_v1_proto_rawDesc), len(file_user_v1_v1_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

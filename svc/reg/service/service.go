@@ -9,6 +9,7 @@ import (
 	"reg/repo"
 	"slices"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,10 +17,11 @@ type Service struct {
 	repo      *repo.Repositories
 	hasher    hasher.IHasher
 	generator token.ITokenGenerator
+	validator token.ITokenValidator
 }
 
-func New(db *pgxpool.Pool, hasher hasher.IHasher, generator token.ITokenGenerator) *Service {
-	return &Service{repo: repo.NewRepositories(db), hasher: hasher, generator: generator}
+func New(db *pgxpool.Pool, hasher hasher.IHasher, generator token.ITokenGenerator, validator token.ITokenValidator) *Service {
+	return &Service{repo: repo.NewRepositories(db), hasher: hasher, generator: generator, validator: validator}
 }
 
 func (s *Service) Register(ctx context.Context,
@@ -82,5 +84,36 @@ func (s *Service) Login(ctx context.Context,
 		Access:  access,
 		Refresh: refresh,
 		Type:    "Bearer",
+	}, nil
+}
+
+func (s *Service) FetchProfile(ctx context.Context,
+	params *userv1.GetProfileRequest) (*userv1.GetProfileResponse, error) {
+	claims, err := s.validator.ValidateToken(params.GetJwt(), token.Access)
+	if err != nil {
+		return nil, err
+	}
+	id, _ := uuid.Parse(claims.UserID)
+	profile, err := s.repo.GetProfile(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &userv1.GetProfileResponse{
+		Id:    profile.ID,
+		Email: profile.Email,
+		Name:  profile.Name,
+		Date:  profile.CreatedAt.String(),
+	}, nil
+}
+
+func (s *Service) Logout(ctx context.Context,
+	params *userv1.LogoutRequest) (*userv1.LogoutResponse, error) {
+	tokenHash := hasher.HashToken(params.GetRefreshToken())
+	err := s.repo.DeleteToken(ctx, tokenHash)
+	if err != nil {
+		return nil, err
+	}
+	return &userv1.LogoutResponse{
+		Response: "Logged out successfully",
 	}, nil
 }

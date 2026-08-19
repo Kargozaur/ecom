@@ -5,7 +5,9 @@ option go_package = "proto/out/user/v1;userv1";
 
 service UserService {
     rpc RegisterUser(RegisterUserRequest) returns(RegisterUserResponse);
+    rpc LoginUser(LoginUserRequest) returns(LoginUserResponse);
     rpc GetProfile(GetProfileRequest) returns(GetProfileResponse);
+    rpc Logout(LogoutRequest) returns(LogoutResponse);
 }
 
 message RegisterUserRequest {
@@ -38,4 +40,12 @@ message LoginUserResponse {
     string access = 1;
     string refresh = 2;
     string type = 3;
+}
+
+message LogoutRequest {
+    string refresh_token = 1;
+}
+
+message LogoutResponse {
+    string response = 1;
 }
