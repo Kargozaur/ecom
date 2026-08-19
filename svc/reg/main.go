@@ -34,7 +34,10 @@ func main() {
 	}
 	defer listener.Close()
 	grpcServer := grpc.NewServer()
-	serv := &server.GRPCServer{}
+	serv := server.NewGRPCServer(pool)
+	if serv == nil {
+		log.Fatal("Failed to create GRPC server")
+	}
 	userv1.RegisterUserServiceServer(grpcServer, serv)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve %s\n", err.Error())

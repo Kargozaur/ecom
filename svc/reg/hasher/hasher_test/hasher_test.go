@@ -7,10 +7,7 @@ import (
 )
 
 func TestHash(t *testing.T) {
-	h, err := hasher.NewArgon2Hasher()
-	if err != nil {
-		t.Fatalf("NewArgon2Hasher() error: %v", err)
-	}
+	h := hasher.NewArgon2Hasher()
 
 	tests := []struct {
 		name     string
@@ -50,7 +47,7 @@ func TestHash(t *testing.T) {
 }
 
 func TestCompareHashAndPassword_CorrectPassword(t *testing.T) {
-	h, _ := hasher.NewArgon2Hasher()
+	h := hasher.NewArgon2Hasher()
 	password := "correct-horse-battery-staple"
 
 	encoded, err := h.Hash(password)
@@ -68,7 +65,7 @@ func TestCompareHashAndPassword_CorrectPassword(t *testing.T) {
 }
 
 func TestCompareHashAndPassword_WrongPassword(t *testing.T) {
-	h, _ := hasher.NewArgon2Hasher()
+	h := hasher.NewArgon2Hasher()
 	encoded, err := h.Hash("real-password")
 	if err != nil {
 		t.Fatalf("Hash() error: %v", err)
@@ -84,7 +81,7 @@ func TestCompareHashAndPassword_WrongPassword(t *testing.T) {
 }
 
 func TestCompareHashAndPassword_InvalidHashFormat(t *testing.T) {
-	h, _ := hasher.NewArgon2Hasher()
+	h := hasher.NewArgon2Hasher()
 
 	tests := []struct {
 		name       string

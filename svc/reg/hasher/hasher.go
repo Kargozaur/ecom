@@ -27,7 +27,7 @@ type Hasher struct {
 	params *Argon2Params
 }
 
-func NewArgon2Hasher() (*Hasher, error) {
+func NewArgon2Hasher() *Hasher {
 	defaultParams := &Argon2Params{
 		Memory:      64 * 1024,
 		Iterations:  3,
@@ -35,7 +35,7 @@ func NewArgon2Hasher() (*Hasher, error) {
 		SaltLength:  16,
 		KeyLength:   32,
 	}
-	return &Hasher{params: defaultParams}, nil
+	return &Hasher{params: defaultParams}
 }
 
 func (h *Hasher) Hash(password string) (string, error) {
