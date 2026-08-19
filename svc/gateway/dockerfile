@@ -1,6 +1,6 @@
 FROM golang:1.26.6-bookworm AS builder
 
-WORKDIR app/
+WORKDIR /app
 
 COPY ./svc/gateway/go.mod ./
 
