@@ -16,7 +16,7 @@ func srvConfig(clients *grpcClients) *http.Server {
 	cfg, _ := token.NewTokenConfig()
 	validator := token.NewTokenValidator(cfg)
 	mux := http.NewServeMux()
-	pwdPolicies := CreatePolicies()
+	pwdPolicies := CreatePasswordPolicies()
 	handlers.RegisterUserHandler(mux, clients.userClient, validator, pwdPolicies)
 	health.Health(mux)
 	timeoutHandler := http.TimeoutHandler(mux, 10*time.Second, "Request timed out")
@@ -32,7 +32,8 @@ func srvConfig(clients *grpcClients) *http.Server {
 }
 
 func main() {
-	userConn, err := grpc.NewClient("localhost:50000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userConn, err := grpc.NewClient("localhost:50000", grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(CreateGRPCRetryPolicy()))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
