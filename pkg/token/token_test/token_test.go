@@ -109,7 +109,7 @@ func TestValidateToken_ValidAccessToken(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, err := val.ValidateToken(tokenStr, token.Access); err != nil {
+	if _, err := val.GetClaims(tokenStr, token.Access); err != nil {
 		t.Fatal("expected token to be valid")
 	}
 }
@@ -124,7 +124,7 @@ func TestValidateToken_ValidRefreshToken(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, err := val.ValidateToken(tokenStr, token.Refresh); err != nil {
+	if _, err := val.GetClaims(tokenStr, token.Refresh); err != nil {
 		t.Fatal("expected token to be valid")
 	}
 }
@@ -139,7 +139,7 @@ func TestValidateToken_WrongTokenType(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, err := val.ValidateToken(tokenStr, token.Refresh); err == nil {
+	if _, err := val.GetClaims(tokenStr, token.Refresh); err == nil {
 		t.Fatal("expected validation to fail: access token checked against refresh key")
 	}
 }
@@ -155,7 +155,7 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, err := val.ValidateToken(tokenStr, token.Access); err == nil {
+	if _, err := val.GetClaims(tokenStr, token.Access); err == nil {
 		t.Fatal("expected expired token to be invalid")
 	}
 }
@@ -171,7 +171,7 @@ func TestValidateToken_SignedWithWrongKey(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, err := val.ValidateToken(tokenStr, token.Access); err == nil {
+	if _, err := val.GetClaims(tokenStr, token.Access); err == nil {
 		t.Fatal("expected token signed with foreign key to be invalid")
 	}
 }
@@ -179,7 +179,7 @@ func TestValidateToken_MalformedToken(t *testing.T) {
 	cfg := testConfig(t)
 	val := token.NewTokenValidator(cfg)
 
-	if _, err := val.ValidateToken("not.a.token", token.Access); err == nil {
+	if _, err := val.GetClaims("not.a.token", token.Access); err == nil {
 		t.Fatal("expected token to be invalid")
 	}
 }
@@ -203,7 +203,7 @@ func TestValidateToken_RejectsAlgConfusion(t *testing.T) {
 		t.Fatalf("failed to sign token: %v", err)
 	}
 
-	if _, err := val.ValidateToken(tokenStr, token.Access); err == nil {
+	if _, err := val.GetClaims(tokenStr, token.Access); err == nil {
 		t.Fatal("was expecting rejection")
 	}
 }
@@ -218,7 +218,7 @@ func TestGetUserID_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	claims, err := val.ValidateToken(tokenStr, token.Access)
+	claims, err := val.GetClaims(tokenStr, token.Access)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestGetUserID_ExpiredToken(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	_, err = val.ValidateToken(tokenStr, token.Access)
+	_, err = val.GetClaims(tokenStr, token.Access)
 	if err == nil {
 		t.Fatal("expected error for expired token")
 	}

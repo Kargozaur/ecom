@@ -89,7 +89,7 @@ func (s *Service) Login(ctx context.Context,
 
 func (s *Service) FetchProfile(ctx context.Context,
 	params *userv1.GetProfileRequest) (*userv1.GetProfileResponse, error) {
-	claims, err := s.validator.ValidateToken(params.GetJwt(), token.Access)
+	claims, err := s.validator.GetClaims(params.GetJwt(), token.Access)
 	if err != nil {
 		return nil, err
 	}

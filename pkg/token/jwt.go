@@ -21,7 +21,7 @@ type ITokenGenerator interface {
 }
 
 type ITokenValidator interface {
-	ValidateToken(string, TokenType) (*Claims, error)
+	GetClaims(string, TokenType) (*Claims, error)
 }
 type JWTClaims struct {
 	UserID string
@@ -100,7 +100,7 @@ func (v *TokenValidator) parseToken(jwtToken string, tokenType TokenType) (*jwt.
 	return token, nil
 }
 
-func (v *TokenValidator) ValidateToken(jwtToken string, tokenType TokenType) (*Claims, error) {
+func (v *TokenValidator) GetClaims(jwtToken string, tokenType TokenType) (*Claims, error) {
 	token, err := v.parseToken(jwtToken, tokenType)
 	if err != nil || !token.Valid {
 		return nil, err

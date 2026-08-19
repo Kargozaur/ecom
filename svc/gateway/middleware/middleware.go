@@ -41,7 +41,7 @@ func (m *middleware) ValidateToken(next http.Handler) http.HandlerFunc {
 			http.Error(w, "wrong token format", http.StatusBadRequest)
 			return
 		}
-		claims, err := m.validator.ValidateToken(tokenString, token.Access)
+		claims, err := m.validator.GetClaims(tokenString, token.Access)
 		ctx := context.WithValue(r.Context(), ClaimsKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
