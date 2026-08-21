@@ -2,6 +2,7 @@ package token
 
 import (
 	"crypto/rsa"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"pkg/envreader"
@@ -20,28 +21,64 @@ type TokenConfig struct {
 	issuer                 string
 }
 
-func NewTokenConfig() (*TokenConfig, error) {
-	accessPrivPEM := envreader.Read("ACCESS_TOKEN_PRIVATE_KEY", "")
-	accessPubPEM := envreader.Read("ACCESS_TOKEN_PUBLIC_KEY", "")
-	refreshPrivPEM := envreader.Read("REFRESH_TOKEN_PRIVATE_KEY", "")
-	refreshPubPEM := envreader.Read("REFRESH_TOKEN_PUBLIC_KEY", "")
+func decodeBase64Key(value string) ([]byte, error) {
+	decoded, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return nil, fmt.Errorf("decode base64: %w", err)
+	}
 
-	if accessPrivPEM == "" || accessPubPEM == "" || refreshPrivPEM == "" || refreshPubPEM == "" {
+	return decoded, nil
+}
+
+func NewTokenConfig() (*TokenConfig, error) {
+	accessPrivB64 := envreader.Read("ACCESS_TOKEN_PRIVATE_KEY", "")
+	accessPubB64 := envreader.Read("ACCESS_TOKEN_PUBLIC_KEY", "")
+	refreshPrivB64 := envreader.Read("REFRESH_TOKEN_PRIVATE_KEY", "")
+	refreshPubB64 := envreader.Read("REFRESH_TOKEN_PUBLIC_KEY", "")
+
+	if accessPrivB64 == "" ||
+		accessPubB64 == "" ||
+		refreshPrivB64 == "" ||
+		refreshPubB64 == "" {
 		return nil, errors.New("RSA keys must not be empty")
 	}
-	accessPriv, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(accessPrivPEM))
+
+	accessPrivPEM, err := decodeBase64Key(accessPrivB64)
+	if err != nil {
+		return nil, fmt.Errorf("decode access private key: %w", err)
+	}
+
+	accessPubPEM, err := decodeBase64Key(accessPubB64)
+	if err != nil {
+		return nil, fmt.Errorf("decode access public key: %w", err)
+	}
+
+	refreshPrivPEM, err := decodeBase64Key(refreshPrivB64)
+	if err != nil {
+		return nil, fmt.Errorf("decode refresh private key: %w", err)
+	}
+
+	refreshPubPEM, err := decodeBase64Key(refreshPubB64)
+	if err != nil {
+		return nil, fmt.Errorf("decode refresh public key: %w", err)
+	}
+
+	accessPriv, err := jwt.ParseRSAPrivateKeyFromPEM(accessPrivPEM)
 	if err != nil {
 		return nil, fmt.Errorf("parse access private key: %w", err)
 	}
-	accessPub, err := jwt.ParseRSAPublicKeyFromPEM([]byte(accessPubPEM))
+
+	accessPub, err := jwt.ParseRSAPublicKeyFromPEM(accessPubPEM)
 	if err != nil {
 		return nil, fmt.Errorf("parse access public key: %w", err)
 	}
-	refreshPriv, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(refreshPrivPEM))
+
+	refreshPriv, err := jwt.ParseRSAPrivateKeyFromPEM(refreshPrivPEM)
 	if err != nil {
 		return nil, fmt.Errorf("parse refresh private key: %w", err)
 	}
-	refreshPub, err := jwt.ParseRSAPublicKeyFromPEM([]byte(refreshPubPEM))
+
+	refreshPub, err := jwt.ParseRSAPublicKeyFromPEM(refreshPubPEM)
 	if err != nil {
 		return nil, fmt.Errorf("parse refresh public key: %w", err)
 	}
