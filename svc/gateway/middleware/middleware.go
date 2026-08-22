@@ -59,16 +59,3 @@ func (m *middleware) SetUserID(next http.Handler) http.HandlerFunc {
 		next.ServeHTTP(w, r)
 	})
 }
-
-func (m *middleware) SetEmail(next http.Handler) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cl := r.Context().Value(ClaimsKey)
-		claims, ok := cl.(*token.Claims)
-		if !ok {
-			http.Error(w, token.ErrInvalidClaims.Error(), http.StatusBadRequest)
-			return
-		}
-		r.Header.Set("email", claims.Email)
-		next.ServeHTTP(w, r)
-	})
-}
