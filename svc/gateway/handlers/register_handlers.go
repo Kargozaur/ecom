@@ -14,4 +14,6 @@ func RegisterUserHandler(mux *http.ServeMux, cl userv1.UserServiceClient, valida
 	handler := userhandler.NewUserHandler(cl, policies)
 	mux.HandleFunc("POST /user/register", handler.CreateUser)
 	mux.HandleFunc("GET /user/get_profile", mw.ValidateToken(http.HandlerFunc(handler.GetProfile)))
+	mux.HandleFunc("POST /user/login", handler.Login)
+
 }

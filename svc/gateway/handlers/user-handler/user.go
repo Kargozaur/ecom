@@ -8,6 +8,7 @@ import (
 	"pkg/credvalidator"
 	"pkg/json"
 	userv1 "proto/out/user/v1"
+	"time"
 )
 
 type UserHandler struct {
@@ -54,4 +55,40 @@ func (u *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		RegisterData: req.GetDate(),
 	}
 	json.Write(w, http.StatusOK, responseBody)
+}
+
+func (u *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var body userstructs.Login
+	if err := json.Read(r, &body); err != nil {
+		http.Error(w, "Failed to parse request body "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	data := &userv1.LoginUserRequest{Email: body.Email, Password: body.Password}
+	resp, err := u.userClient.LoginUser(r.Context(), data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	access := &http.Cookie{
+		Name:     "access_token",
+		Value:    resp.GetAccess(),
+		Path:     "/",
+		Expires:  time.Now().UTC().Add(time.Minute * 15),
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+	refresh := &http.Cookie{
+		Name:     "refresh_token",
+		Value:    resp.GetRefresh(),
+		Path:     "/",
+		Expires:  time.Now().UTC().Add(time.Hour * 24 * 7),
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, access)
+	http.SetCookie(w, refresh)
+	json.Write(w, http.StatusOK,
+		map[string]string{"token": resp.GetAccess(), "type": resp.GetType()})
 }
