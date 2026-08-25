@@ -42,7 +42,7 @@ func (u *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	token := r.Context().Value(middleware.ClaimsKey).(string)
+	token := r.Context().Value(middleware.TokenKey).(string)
 	data := &userv1.GetProfileRequest{Jwt: token}
 	req, err := u.userClient.GetProfile(r.Context(), data)
 	if err != nil {
