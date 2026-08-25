@@ -1,7 +1,7 @@
 package userstructs
 
 type Profile struct {
-	Name         string `json:"name,case:ignore"`
-	Email        string `json:"email,case:ignore"`
-	RegisterData string `json:"registerDate,case:ignore"`
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	RegisterData string `json:"registerDate"`
 }

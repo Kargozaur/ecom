@@ -3,9 +3,9 @@ package userstructs
 import "pkg/credvalidator"
 
 type Register struct {
-	Email    string `json:"email,case:ignore"`
-	Password string `json:"password,case:ignore"`
-	Name     string `json:"name,case:ignore"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
 }
 
 func (r *Register) ValidateData(policy credvalidator.PasswordPolicy) []error {
