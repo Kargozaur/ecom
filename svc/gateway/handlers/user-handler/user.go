@@ -92,3 +92,42 @@ func (u *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusOK,
 		map[string]string{"token": resp.GetAccess(), "type": resp.GetType()})
 }
+
+func (u *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	refreshCookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		http.Error(w, "failed to get a cookie", http.StatusBadRequest)
+		return
+	}
+	data := &userv1.LogoutRequest{RefreshToken: refreshCookie.Value}
+	res, err := u.userClient.Logout(r.Context(), data)
+	if err != nil {
+		http.Error(w, "failed to log out", http.StatusBadRequest)
+		return
+	}
+	access := &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+		Expires:  time.Now().Add(time.Hour * -1),
+	}
+	refresh := &http.Cookie{
+		Name:     "refresh",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+		Expires:  time.Now().Add(time.Hour * -145),
+	}
+	http.SetCookie(w, access)
+	http.SetCookie(w, refresh)
+	json.Write(w, http.StatusAccepted, map[string]string{
+		"response": res.GetResponse(),
+	})
+}
