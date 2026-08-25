@@ -62,11 +62,11 @@ func (s *Service) Login(ctx context.Context,
 		if !valid {
 			return e
 		}
+		id = credentials.ID.String()
+		email = credentials.Email
 		access, _ = s.generator.GenerateAccessToken(id, iss, email)
 		refresh, _ = s.generator.GenerateRefreshToken(id, iss, email)
 		tokenHash := hasher.HashToken(refresh)
-		id = credentials.ID.String()
-		email = credentials.Email
 		err = s.repo.CreateToken(ctx, id, tokenHash)
 		if err != nil {
 			return err

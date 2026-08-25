@@ -16,16 +16,45 @@ services:
         timeout: 5s
         retries: 5
 
+  gateway:
+      image: gateway:latest
+      container_name: gateway
+      env_file: .env
+      ports:
+          - "8000:8080"
+      environment:
+          USER_CONN: user:50000
+          ACCESS_TOKEN_PRIVATE_KEY: ${ACCESS_TOKEN_PRIVATE_KEY}
+          REFRESH_TOKEN_PRIVATE_KEY: ${REFRESH_TOKEN_PRIVATE_KEY}
+          ACCESS_TOKEN_PUBLIC_KEY: ${ACCESS_TOKEN_PUBLIC_KEY}
+          REFRESH_TOKEN_PUBLIC_KEY: ${REFRESH_TOKEN_PUBLIC_KEY}
+      restart: unless-stopped
+      build:
+          dockerfile: ./svc/gateway/dockerfile
+      healthcheck:
+          test: ["CMD-SHELL", "curl -f http://localhost:8080/health"]
+          interval: 30s
+          timeout: 5s
+          retries: 5
+      depends_on:
+          - db
+
   user:
       image: user:latest
       container_name: user
-      ports:
-          - "8080:8080"
+      env_file: .env
       environment:
-          DATABASE_URL: postgres://postgres:1234@db:5432/user_db
+          DB_URL: postgres://postgres:1234@db:5432/user_db
+          ACCESS_TOKEN_PRIVATE_KEY: ${ACCESS_TOKEN_PRIVATE_KEY}
+          REFRESH_TOKEN_PRIVATE_KEY: ${REFRESH_TOKEN_PRIVATE_KEY}
+          ACCESS_TOKEN_PUBLIC_KEY: ${ACCESS_TOKEN_PUBLIC_KEY}
+          REFRESH_TOKEN_PUBLIC_KEY: ${REFRESH_TOKEN_PUBLIC_KEY}
       restart: unless-stopped
+      build:
+          dockerfile: ./svc/reg/dockerfile
       depends_on:
           - db
+          - gateway
 
 
 

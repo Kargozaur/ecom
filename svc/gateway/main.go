@@ -5,6 +5,7 @@ import (
 	"gateway/handlers/health"
 	"log"
 	"net/http"
+	"pkg/envreader"
 	"pkg/token"
 	"time"
 
@@ -32,7 +33,8 @@ func srvConfig(clients *grpcClients) *http.Server {
 }
 
 func main() {
-	userConn, err := grpc.NewClient("localhost:50000", grpc.WithTransportCredentials(insecure.NewCredentials()),
+	userConn, err := grpc.NewClient(envreader.Read("USER_CONN", "localhost:50000"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultServiceConfig(CreateGRPCRetryPolicy()))
 	if err != nil {
 		log.Fatal(err.Error())

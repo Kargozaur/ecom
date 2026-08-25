@@ -19,10 +19,10 @@ type GRPCServer struct {
 	service *service.Service
 }
 
-func NewGRPCServer(pool *pgxpool.Pool) *GRPCServer {
+func NewGRPCServer(pool *pgxpool.Pool) (*GRPCServer, error) {
 	cfg, err := token.NewTokenConfig()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	hasher := hasher.NewArgon2Hasher()
 	tokenGenerator := token.NewTokenGenerator(cfg, "user-service")
@@ -30,7 +30,7 @@ func NewGRPCServer(pool *pgxpool.Pool) *GRPCServer {
 	service := service.New(pool, hasher, tokenGenerator, tokenValidator)
 	return &GRPCServer{
 		service: service,
-	}
+	}, nil
 }
 
 func (s *GRPCServer) RegisterUser(ctx context.Context, req *userv1.RegisterUserRequest) (*userv1.RegisterUserResponse, error) {
