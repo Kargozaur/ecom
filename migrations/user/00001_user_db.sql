@@ -5,8 +5,8 @@ create table if not exists users (
     email text not null unique,
     name varchar(100) not null,
     password_hash text not null,
-    created_at date default (now() at time zone "UTC"),
-    updated_at date default (now() at time zone "UTC")
+    created_at date default (now() at time zone 'UTC'),
+    updated_at date default (now() at time zone 'UTC')
 );
 
 create table if not exists refresh_tokens (
@@ -14,7 +14,7 @@ create table if not exists refresh_tokens (
     user_id uuid,
     token_hash text,
     deleted bool default false,
-    created_at timestamptz default (now() at time zone "UTC"),
+    created_at timestamptz default (now() at time zone 'UTC'),
     foreign key (user_id) references users(id) on delete cascade
     );
 -- +goose StatementEnd
