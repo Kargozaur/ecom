@@ -35,7 +35,7 @@ func (u *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	data := &userv1.RegisterUserRequest{Email: body.Email, Password: body.Password, Name: body.Name}
 	resp, err := u.userClient.RegisterUser(r.Context(), data)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusRequestTimeout)
+		http.Error(w, "failed to register", http.StatusRequestTimeout)
 		return
 	}
 	json.Write(w, http.StatusCreated, map[string]string{"response": resp.GetResponse()})
@@ -46,7 +46,7 @@ func (u *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	data := &userv1.GetProfileRequest{Jwt: token}
 	req, err := u.userClient.GetProfile(r.Context(), data)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "failed to fetch profile", http.StatusBadRequest)
 		return
 	}
 	responseBody := &userstructs.Profile{
@@ -66,7 +66,7 @@ func (u *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	data := &userv1.LoginUserRequest{Email: body.Email, Password: body.Password}
 	resp, err := u.userClient.LoginUser(r.Context(), data)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "failed to login", http.StatusBadRequest)
 		return
 	}
 	access := &http.Cookie{
