@@ -64,8 +64,14 @@ func (s *Service) Login(ctx context.Context,
 		}
 		id = credentials.ID.String()
 		email = credentials.Email
-		access, _ = s.generator.GenerateAccessToken(id, iss, email)
-		refresh, _ = s.generator.GenerateRefreshToken(id, iss, email)
+		access, err = s.generator.GenerateAccessToken(id, iss, email)
+		if err != nil {
+			return err
+		}
+		refresh, err = s.generator.GenerateRefreshToken(id, iss, email)
+		if err != nil {
+			return err
+		}
 		tokenHash := hasher.HashToken(refresh)
 		err = s.repo.CreateToken(ctx, id, tokenHash)
 		if err != nil {
@@ -107,8 +113,15 @@ func (s *Service) FetchProfile(ctx context.Context,
 
 func (s *Service) Logout(ctx context.Context,
 	params *userv1.LogoutRequest) (*userv1.LogoutResponse, error) {
-	tokenHash := hasher.HashToken(params.GetRefreshToken())
-	err := s.repo.DeleteToken(ctx, tokenHash)
+	refreshToken := params.GetRefreshToken()
+	_, err := s.validator.GetClaims(refreshToken, token.Refresh)
+	if err != nil {
+		return nil, err
+	}
+	tokenHash := hasher.HashToken(refreshToken)
+	err = s.repo.WithinTx(ctx, func(ctx context.Context) error {
+		return s.repo.DeleteToken(ctx, tokenHash)
+	})
 	if err != nil {
 		return nil, err
 	}

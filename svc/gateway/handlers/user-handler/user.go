@@ -116,14 +116,14 @@ func (u *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(time.Hour * -1),
 	}
 	refresh := &http.Cookie{
-		Name:     "refresh",
+		Name:     "refresh_token",
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
-		Expires:  time.Now().Add(time.Hour * -145),
+		Expires:  time.Now().Add(-time.Hour),
 	}
 	http.SetCookie(w, access)
 	http.SetCookie(w, refresh)
