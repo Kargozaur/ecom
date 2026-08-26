@@ -48,14 +48,12 @@ func NewTokenValidator(cfg *TokenConfig) *TokenValidator {
 }
 func (c *TokenGenerator) generateToken(key *rsa.PrivateKey, userID, iss, email string, exp time.Duration) (string, error) {
 	claims := JWTClaims{
-		UserID: userID,
-		Email:  email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(exp)),
-			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
-			NotBefore: jwt.NewNumericDate(time.Now().UTC()),
-			Issuer:    iss,
-		},
+		UserID:    userID,
+		Email:     email,
+		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(exp)),
+		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+		NotBefore: jwt.NewNumericDate(time.Now().UTC()),
+		Issuer:    iss,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return token.SignedString(key)
