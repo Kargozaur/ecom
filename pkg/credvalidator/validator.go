@@ -16,9 +16,7 @@ const pwdmaxLength = 128
 const pwdminLength = 8
 
 func CreatePasswordPolicies(f ...func(string) error) PasswordPolicy {
-	funcs := make([]func(string) error, 0, len(f))
-	funcs = append(funcs, f...)
-	return PasswordPolicy{policies: funcs}
+	return PasswordPolicy{policies: f}
 }
 
 func (p PasswordPolicy) GetPolicices() []func(string) error {
