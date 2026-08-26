@@ -12,21 +12,25 @@ func TestHash(t *testing.T) {
 	tests := []struct {
 		name     string
 		password string
+		wantErr  bool
 	}{
-		{"standart password", "SuperSecret123!"},
-		{"empty password", ""},
-		{"long password", strings.Repeat("a", 256)},
-		{"unicode password", "pwd密码🔒"},
+		{"standart password", "SuperSecret123!", false},
+		{"empty password", "", false},
+		{"long password", strings.Repeat("a", 256), true},
+		{"unicode password", "pwd密码🔒", false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			encoded, err := h.Hash(tt.password)
-			if err != nil {
+			if (err != nil) != tt.wantErr {
 				t.Fatalf("Hash() returned an empty string: %v", err)
 			}
-			if encoded == "" {
+			if (encoded == "") != tt.wantErr {
 				t.Fatal("Hash() returned an empty string")
+			}
+			if tt.wantErr {
+				return
 			}
 
 			parts := strings.Split(encoded, "$")
@@ -106,5 +110,21 @@ func TestCompareHashAndPassword_InvalidHashFormat(t *testing.T) {
 				t.Error("CompareHashAndPassword() = true, want false")
 			}
 		})
+	}
+}
+
+func TestCompareHashAndPassword_StringTooLong(t *testing.T) {
+	h := hasher.NewArgon2Hasher()
+	_, err := h.Hash(strings.Repeat("a", 129))
+	if err == nil {
+		t.Fatalf("Hash() error: %v", err)
+	}
+
+	ok, err := h.CompareHashAndPassword(strings.Repeat("a", 129), "")
+	if err != hasher.ErrStringTooLong {
+		t.Fatalf("CompareHashAndPassword() unexpecter error: %v", err)
+	}
+	if ok {
+		t.Error("CompareHashAndPassword() = true, want false")
 	}
 }

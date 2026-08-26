@@ -10,13 +10,24 @@ type PasswordPolicy struct {
 	policies []func(string) error
 }
 
-var DefaultPasswordPolicy = CreatePasswordPolicies(IsEmpty, IsLong(pwdmaxLength), IsShort(pwdminLength), HasSpec, IsNumber, IsUpper)
+var DefaultPasswordPolicy = PasswordPolicy{policies: []func(string) error{IsEmpty,
+	IsLong(pwdmaxLength),
+	IsShort(pwdminLength),
+	HasSpec,
+	IsNumber,
+	IsUpper}}
 
 const pwdmaxLength = 128
 const pwdminLength = 8
 
+// CreatePasswordPolicies creates a PasswordPolicy from the given policies.
+// If no policies are provided, the default policy is returned.
 func CreatePasswordPolicies(f ...func(string) error) PasswordPolicy {
-	return PasswordPolicy{policies: f}
+	if len(f) == 0 {
+		return DefaultPasswordPolicy
+	} else {
+		return PasswordPolicy{policies: f}
+	}
 }
 
 func (p PasswordPolicy) GetPolicices() []func(string) error {

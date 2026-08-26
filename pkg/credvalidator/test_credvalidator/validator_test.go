@@ -134,8 +134,8 @@ func TestCreatePasswordPolicies(t *testing.T) {
 
 	t.Run("no policies given", func(t *testing.T) {
 		p := credvalidator.CreatePasswordPolicies()
-		if len(p.GetPolicices()) != 0 {
-			t.Fatalf("expected 0 policies, got %d", len(p.GetPolicices()))
+		if len(p.GetPolicices()) != 6 {
+			t.Fatalf("expected 6 policies, got %d", len(p.GetPolicices()))
 		}
 	})
 
@@ -157,7 +157,6 @@ func TestApplyPolicies(t *testing.T) {
 		policies []func(string) error
 		wantLen  int
 	}{
-		{"no policies", nil, 0},
 		{"all pass", []func(string) error{alwaysPass, alwaysPass}, 0},
 		{"all fail", []func(string) error{alwaysFail, alwaysFail}, 2},
 		{"mixed", []func(string) error{alwaysPass, alwaysFail, alwaysPass, alwaysFail}, 2},

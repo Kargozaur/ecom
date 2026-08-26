@@ -39,6 +39,9 @@ func NewArgon2Hasher() *Hasher {
 }
 
 func (h *Hasher) Hash(password string) (string, error) {
+	if len(password) > 128 {
+		return "", ErrStringTooLong
+	}
 	hash, err := h.generateFromPassword(password)
 	if err != nil {
 		return "", err
@@ -47,6 +50,9 @@ func (h *Hasher) Hash(password string) (string, error) {
 }
 
 func (h *Hasher) CompareHashAndPassword(pwd, encodedPwd string) (bool, error) {
+	if len(pwd) > 128 {
+		return false, ErrStringTooLong
+	}
 	p, salt, hash, err := h.decodeHash(encodedPwd)
 	if err != nil {
 		return false, err
