@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package order.v1;
+option go_package = "proto/out/order/v1;orderv1";
+service OrderService {
+    rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+    rpc FetchOrder(FetchOrderRequest) returns(FetchOrderResponse);
+}
+
+message CreateOrderRequest {
+    string user_id = 1;
+    repeated OrderItem items = 2;
+}
+
+message CreateOrderResponse {
+    string order_id = 1;
+    string status = 2;
+    string message = 3;
+}
+
+message OrderItem {
+    string product_id = 1;
+    string name = 2;
+    int32 quantity = 3;
+    float price = 4;
+}
+
+message FetchOrderRequest {
+    string order_id = 1;
+}
+
+message FetchOrderResponse {
+    string status = 2;
+    string message = 3;
+    repeated OrderItem items = 4;
+}
