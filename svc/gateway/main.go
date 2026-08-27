@@ -1,24 +1,22 @@
 package main
 
 import (
+	"context"
 	"gateway/handlers"
 	"gateway/handlers/health"
 	"log"
 	"net/http"
-	"pkg/envreader"
 	"pkg/token"
+	userv1 "proto/out/user/v1"
 	"time"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-func srvConfig(clients *grpcClients) *http.Server {
+func srvConfig(clients *Conns) *http.Server {
 	cfg, _ := token.NewTokenConfig()
 	validator := token.NewTokenValidator(cfg)
 	mux := http.NewServeMux()
 	pwdPolicies := CreatePasswordPolicies()
-	handlers.RegisterUserHandler(mux, clients.userClient, validator, pwdPolicies)
+	handlers.RegisterUserHandler(mux, userv1.NewUserServiceClient(clients.userConn), validator, pwdPolicies)
 	health.Health(mux)
 	timeoutHandler := http.TimeoutHandler(mux, 10*time.Second, "Request timed out")
 	srv := &http.Server{
@@ -33,14 +31,9 @@ func srvConfig(clients *grpcClients) *http.Server {
 }
 
 func main() {
-	userConn, err := grpc.NewClient(envreader.Read("USER_CONN", "localhost:50000"),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultServiceConfig(CreateGRPCRetryPolicy()))
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	defer userConn.Close()
-	clients := initClients(userConn)
+	ctx := context.Background()
+	clients := initClients(ctx)
+	defer clients.Close()
 	srv := srvConfig(clients)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to start the server: %s", err.Error())
