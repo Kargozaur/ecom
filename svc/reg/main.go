@@ -21,6 +21,16 @@ func initDB(ctx context.Context) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
+func initServer(pool *pgxpool.Pool) (*grpc.Server, error) {
+	srv, err := server.NewGRPCServer(pool)
+	if err != nil {
+		return nil, err
+	}
+	grpcServer := grpc.NewServer()
+	userv1.RegisterUserServiceServer(grpcServer, srv)
+	return grpcServer, nil
+}
+
 func main() {
 	ctx := context.Background()
 	pool, err := initDB(ctx)
@@ -33,13 +43,11 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	defer listener.Close()
-	grpcServer := grpc.NewServer()
-	serv, err := server.NewGRPCServer(pool)
+	serv, err := initServer(pool)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	userv1.RegisterUserServiceServer(grpcServer, serv)
-	if err := grpcServer.Serve(listener); err != nil {
+	if err := serv.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve %s\n", err.Error())
 	}
 }
