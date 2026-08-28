@@ -33,6 +33,9 @@ func srvConfig(clients *Conns) *http.Server {
 func main() {
 	ctx := context.Background()
 	clients := initClients(ctx)
+	if clients == nil {
+		log.Fatal("Failed to initialize grpc clients")
+	}
 	defer clients.Close()
 	srv := srvConfig(clients)
 	if err := srv.ListenAndServe(); err != nil {
