@@ -13,7 +13,7 @@ import (
 )
 
 func initDB(ctx context.Context) (*pgxpool.Pool, error) {
-	url := envreader.Read("ORDER_URL", "postgres://postgres:1234@localhost:5433/order_db?sslmode=disable&pool_max_conn=10")
+	url := envreader.Read("ORDER_DB", "postgres://postgres:1234@localhost:5433/order_db?sslmode=disable&pool_max_conn=10")
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
 		return nil, err
