@@ -11,6 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const cancelOrder = `-- name: CancelOrder :exec
+update orders
+set status = 'cancelled'
+where id = $1 and user_id = $2
+`
+
+type CancelOrderParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
+
+func (q *Queries) CancelOrder(ctx context.Context, arg CancelOrderParams) error {
+	_, err := q.db.Exec(ctx, cancelOrder, arg.ID, arg.UserID)
+	return err
+}
+
 const createOrder = `-- name: CreateOrder :one
 insert into orders (user_id, total_price)
 values ($1, $2)
@@ -126,4 +142,26 @@ func (q *Queries) FetchUserOrders(ctx context.Context, arg FetchUserOrdersParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const selectOrderForUpdate = `-- name: SelectOrderForUpdate :one
+select id, status from orders
+where id = $1 and user_id = $2 for update
+`
+
+type SelectOrderForUpdateParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
+
+type SelectOrderForUpdateRow struct {
+	ID     pgtype.UUID
+	Status OrderStatus
+}
+
+func (q *Queries) SelectOrderForUpdate(ctx context.Context, arg SelectOrderForUpdateParams) (SelectOrderForUpdateRow, error) {
+	row := q.db.QueryRow(ctx, selectOrderForUpdate, arg.ID, arg.UserID)
+	var i SelectOrderForUpdateRow
+	err := row.Scan(&i.ID, &i.Status)
+	return i, err
 }

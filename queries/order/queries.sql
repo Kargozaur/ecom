@@ -10,6 +10,10 @@ insert into orders (user_id, total_price)
 values ($1, $2)
 returning id, total_price, status;
 
+-- name: CreateOrderItems :exec
+insert into order_items (order_id, item_id)
+values ($1, $2);
+
 -- name: FetchOrder :one
 with item_counts as (
     select o.id as order_id, o.total_price, o.status, o.created_at,
@@ -34,3 +38,11 @@ select
     ) as items
 from item_counts
 group by order_id, total_price, status, created_at;
+
+-- name: SelectOrderForUpdate :one
+select id, status from orders
+where id = $1 and user_id = $2 for update;
+-- name: CancelOrder :exec
+update orders
+set status = 'cancelled'
+where id = $1 and user_id = $2;
