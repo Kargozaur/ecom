@@ -9,3 +9,12 @@ sql:
             package: "db"
             out: "./svc/reg/db"
             sql_package: "pgx/v5"
+  - name: "order_service"
+    queries: "./queries/order/queries.sql"
+    engine: "postgresql"
+    schema: "./migrations/order/00001_order_db.sql"
+    gen:
+        go:
+            package: "db"
+            out: "./svc/order/db"
+            sql_package: "pgx/v5"
