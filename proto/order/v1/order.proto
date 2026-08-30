@@ -26,7 +26,8 @@ message OrderItem {
 }
 
 message FetchOrderRequest {
-    string order_id = 1;
+    string user_id = 1;
+    string order_id = 2;
 }
 
 message FetchOrderResponse {
