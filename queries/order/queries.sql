@@ -1,5 +1,5 @@
 -- name: FetchUserOrders :many
-select * from orders
+select id, total_price, status, created_at from orders
 where user_id = $1
 order by created_at desc
 limit $2
@@ -35,12 +35,12 @@ select
             order by quantity desc
         ) filter (where item_id is not null),
         '[]'
-    ) as items
+    )::jsonb as items
 from item_counts
 group by order_id, total_price, status, created_at;
 
 -- name: SelectOrderForUpdate :one
-select id, status from orders
+select id, user_id, status from orders
 where id = $1 and user_id = $2 for update;
 -- name: CancelOrder :exec
 update orders

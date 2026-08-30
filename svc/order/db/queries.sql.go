@@ -87,7 +87,7 @@ select
             order by quantity desc
         ) filter (where item_id is not null),
         '[]'
-    ) as items
+    )::jsonb as items
 from item_counts
 group by order_id, total_price, status, created_at
 `
@@ -102,7 +102,7 @@ type FetchOrderRow struct {
 	TotalPrice pgtype.Numeric
 	Status     OrderStatus
 	CreatedAt  pgtype.Timestamp
-	Items      interface{}
+	Items      []byte
 }
 
 func (q *Queries) FetchOrder(ctx context.Context, arg FetchOrderParams) (FetchOrderRow, error) {
@@ -119,7 +119,7 @@ func (q *Queries) FetchOrder(ctx context.Context, arg FetchOrderParams) (FetchOr
 }
 
 const fetchUserOrders = `-- name: FetchUserOrders :many
-select id, user_id, total_price, status, created_at, updated_at from orders
+select id, total_price, status, created_at from orders
 where user_id = $1
 order by created_at desc
 limit $2
@@ -132,22 +132,27 @@ type FetchUserOrdersParams struct {
 	Offset int32
 }
 
-func (q *Queries) FetchUserOrders(ctx context.Context, arg FetchUserOrdersParams) ([]Order, error) {
+type FetchUserOrdersRow struct {
+	ID         pgtype.UUID
+	TotalPrice pgtype.Numeric
+	Status     OrderStatus
+	CreatedAt  pgtype.Timestamp
+}
+
+func (q *Queries) FetchUserOrders(ctx context.Context, arg FetchUserOrdersParams) ([]FetchUserOrdersRow, error) {
 	rows, err := q.db.Query(ctx, fetchUserOrders, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Order
+	var items []FetchUserOrdersRow
 	for rows.Next() {
-		var i Order
+		var i FetchUserOrdersRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.UserID,
 			&i.TotalPrice,
 			&i.Status,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -160,7 +165,7 @@ func (q *Queries) FetchUserOrders(ctx context.Context, arg FetchUserOrdersParams
 }
 
 const selectOrderForUpdate = `-- name: SelectOrderForUpdate :one
-select id, status from orders
+select id, user_id, status from orders
 where id = $1 and user_id = $2 for update
 `
 
@@ -171,12 +176,13 @@ type SelectOrderForUpdateParams struct {
 
 type SelectOrderForUpdateRow struct {
 	ID     pgtype.UUID
+	UserID pgtype.UUID
 	Status OrderStatus
 }
 
 func (q *Queries) SelectOrderForUpdate(ctx context.Context, arg SelectOrderForUpdateParams) (SelectOrderForUpdateRow, error) {
 	row := q.db.QueryRow(ctx, selectOrderForUpdate, arg.ID, arg.UserID)
 	var i SelectOrderForUpdateRow
-	err := row.Scan(&i.ID, &i.Status)
+	err := row.Scan(&i.ID, &i.UserID, &i.Status)
 	return i, err
 }
