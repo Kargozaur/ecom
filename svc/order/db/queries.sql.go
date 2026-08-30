@@ -51,10 +51,25 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Creat
 	return i, err
 }
 
+const createOrderItems = `-- name: CreateOrderItems :exec
+insert into order_items (order_id, item_id)
+values ($1, $2)
+`
+
+type CreateOrderItemsParams struct {
+	OrderID pgtype.UUID
+	ItemID  pgtype.UUID
+}
+
+func (q *Queries) CreateOrderItems(ctx context.Context, arg CreateOrderItemsParams) error {
+	_, err := q.db.Exec(ctx, createOrderItems, arg.OrderID, arg.ItemID)
+	return err
+}
+
 const fetchOrder = `-- name: FetchOrder :one
 with item_counts as (
     select o.id as order_id, o.total_price, o.status, o.created_at,
-        i.id as item_id, i.name, i.price, count(*) as quantity
+        i.id as item_id, i.name, i.price, count(oi.item_id) as quantity
     from orders o
     left join order_items oi on o.id = oi.order_id
     left join items i on oi.item_id = i.id

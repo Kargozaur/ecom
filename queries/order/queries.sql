@@ -17,7 +17,7 @@ values ($1, $2);
 -- name: FetchOrder :one
 with item_counts as (
     select o.id as order_id, o.total_price, o.status, o.created_at,
-        i.id as item_id, i.name, i.price, count(*) as quantity
+        i.id as item_id, i.name, i.price, count(oi.item_id) as quantity
     from orders o
     left join order_items oi on o.id = oi.order_id
     left join items i on oi.item_id = i.id
