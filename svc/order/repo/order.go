@@ -9,31 +9,22 @@ import (
 	"uuid"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type orderRepo struct {
-	queries *db.Queries
+type orderRepo struct{}
+
+type orderItemsRepo struct{}
+
+func newOrderRepo() *orderRepo {
+	return &orderRepo{}
 }
 
-type orderItemsRepo struct {
-	queries *db.Queries
+func newOrderItemsRepo() *orderItemsRepo {
+	return &orderItemsRepo{}
 }
 
-func newOrderRepo(pool *pgxpool.Pool) *orderRepo {
-	return &orderRepo{
-		queries: db.New(pool),
-	}
-}
-
-func newOrderItemsRepo(pool *pgxpool.Pool) *orderItemsRepo {
-	return &orderItemsRepo{
-		queries: db.New(pool),
-	}
-}
-
-func (o *orderRepo) fetchOrder(ctx context.Context, userID, orderID uuid.UUID) (*dbresp.FetchOrder, error) {
-	result, err := o.queries.FetchOrder(ctx, db.FetchOrderParams{
+func (o *orderRepo) fetchOrder(ctx context.Context, queries *db.Queries, userID, orderID uuid.UUID) (*dbresp.FetchOrder, error) {
+	result, err := queries.FetchOrder(ctx, db.FetchOrderParams{
 		ID:     pgtype.UUID{Bytes: orderID, Valid: true},
 		UserID: pgtype.UUID{Bytes: userID, Valid: true},
 	})
@@ -51,8 +42,8 @@ func (o *orderRepo) fetchOrder(ctx context.Context, userID, orderID uuid.UUID) (
 	return &r, nil
 }
 
-func (o *orderRepo) fetchOrders(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]dbresp.Orders, error) {
-	result, err := o.queries.FetchUserOrders(ctx, db.FetchUserOrdersParams{
+func (o *orderRepo) fetchOrders(ctx context.Context, queries *db.Queries, userID uuid.UUID, limit, offset int32) ([]dbresp.Orders, error) {
+	result, err := queries.FetchUserOrders(ctx, db.FetchUserOrdersParams{
 		UserID: pgtype.UUID{Bytes: userID, Valid: true},
 		Limit:  limit,
 		Offset: offset,
@@ -81,15 +72,15 @@ func (o *orderRepo) fetchOrders(ctx context.Context, userID uuid.UUID, limit, of
 	return orders, nil
 }
 
-func (o *orderRepo) cancelOrder(ctx context.Context, userID, orderID uuid.UUID) error {
-	row, err := o.queries.SelectOrderForUpdate(ctx, db.SelectOrderForUpdateParams{
+func (o *orderRepo) cancelOrder(ctx context.Context, queries *db.Queries, userID, orderID uuid.UUID) error {
+	row, err := queries.SelectOrderForUpdate(ctx, db.SelectOrderForUpdateParams{
 		ID:     pgtype.UUID{Bytes: orderID, Valid: true},
 		UserID: pgtype.UUID{Bytes: userID, Valid: true},
 	})
 	if err != nil || !row.ID.Valid {
 		return err
 	}
-	err = o.queries.CancelOrder(ctx, db.CancelOrderParams{
+	err = queries.CancelOrder(ctx, db.CancelOrderParams{
 		ID:     row.ID,
 		UserID: row.UserID,
 	})
@@ -99,12 +90,12 @@ func (o *orderRepo) cancelOrder(ctx context.Context, userID, orderID uuid.UUID) 
 	return nil
 }
 
-func (o *orderRepo) createOrder(ctx context.Context, userID uuid.UUID, totalPrice float64) (dbresp.CreateOrderResponse, error) {
+func (o *orderRepo) createOrder(ctx context.Context, queries *db.Queries, userID uuid.UUID, totalPrice float64) (dbresp.CreateOrderResponse, error) {
 	var x pgtype.Numeric
 	if err := x.Scan(totalPrice); err != nil {
 		return dbresp.CreateOrderResponse{}, err
 	}
-	row, err := o.queries.CreateOrder(ctx, db.CreateOrderParams{
+	row, err := queries.CreateOrder(ctx, db.CreateOrderParams{
 		UserID:     pgtype.UUID{Bytes: userID, Valid: true},
 		TotalPrice: x,
 	})
@@ -119,7 +110,7 @@ func (o *orderRepo) createOrder(ctx context.Context, userID uuid.UUID, totalPric
 	return resp, nil
 }
 
-func (o *orderItemsRepo) insertOrderItems(ctx context.Context, orderID uuid.UUID, itemID []uuid.UUID) error {
+func (o *orderItemsRepo) insertOrderItems(ctx context.Context, queries *db.Queries, orderID uuid.UUID, itemID []uuid.UUID) error {
 	var wg sync.WaitGroup
 	l := len(itemID)
 	errChan := make(chan error, l)
@@ -127,7 +118,7 @@ func (o *orderItemsRepo) insertOrderItems(ctx context.Context, orderID uuid.UUID
 		wg.Add(1)
 		go func(id uuid.UUID) {
 			defer wg.Done()
-			if err := o.queries.CreateOrderItems(ctx, db.CreateOrderItemsParams{
+			if err := queries.CreateOrderItems(ctx, db.CreateOrderItemsParams{
 				ItemID:  pgtype.UUID{Bytes: id, Valid: true},
 				OrderID: pgtype.UUID{Bytes: orderID, Valid: true},
 			}); err != nil {

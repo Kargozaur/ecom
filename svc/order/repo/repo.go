@@ -22,8 +22,8 @@ type Repo struct {
 func NewRepo(pool *pgxpool.Pool) *Repo {
 	return &Repo{
 		queries:        db.New(pool),
-		orderRepo:      newOrderRepo(pool),
-		orderItemsRepo: newOrderItemsRepo(pool),
+		orderRepo:      newOrderRepo(),
+		orderItemsRepo: newOrderItemsRepo(),
 	}
 }
 
@@ -51,7 +51,7 @@ func (r *Repo) WithinTx(ctx context.Context, fn func(context.Context) error) err
 }
 
 func (r *Repo) FetchOrders(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]dbresp.Orders, error) {
-	result, err := r.orderRepo.fetchOrders(ctx, userID, limit, offset)
+	result, err := r.orderRepo.fetchOrders(ctx, r.querier(ctx), userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (r *Repo) FetchOrders(ctx context.Context, userID uuid.UUID, limit, offset 
 }
 
 func (r *Repo) FetchOrder(ctx context.Context, userID, orderID uuid.UUID) (*dbresp.FetchOrder, error) {
-	result, err := r.orderRepo.fetchOrder(ctx, userID, orderID)
+	result, err := r.orderRepo.fetchOrder(ctx, r.querier(ctx), userID, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (r *Repo) FetchOrder(ctx context.Context, userID, orderID uuid.UUID) (*dbre
 
 func (r *Repo) CreateOrder(ctx context.Context, userID uuid.UUID,
 	price float64, itemIDs []uuid.UUID) (*dbresp.CreateOrderResponse, error) {
-	row, err := r.orderRepo.createOrder(ctx, userID, price)
+	row, err := r.orderRepo.createOrder(ctx, r.querier(ctx), userID, price)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (r *Repo) CreateOrder(ctx context.Context, userID uuid.UUID,
 	if err != nil {
 		return nil, err
 	}
-	err = r.orderItemsRepo.insertOrderItems(ctx, id, itemIDs)
+	err = r.orderItemsRepo.insertOrderItems(ctx, r.querier(ctx), id, itemIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (r *Repo) CreateOrder(ctx context.Context, userID uuid.UUID,
 }
 
 func (r *Repo) CancelOrder(ctx context.Context, userID, orderID uuid.UUID) error {
-	err := r.orderRepo.cancelOrder(ctx, userID, orderID)
+	err := r.orderRepo.cancelOrder(ctx, r.querier(ctx), userID, orderID)
 	if err != nil {
 		return err
 	}
