@@ -20,13 +20,13 @@ type orderItemsRepo struct {
 	queries *db.Queries
 }
 
-func NewOrderRepo(pool *pgxpool.Pool) *orderRepo {
+func newOrderRepo(pool *pgxpool.Pool) *orderRepo {
 	return &orderRepo{
 		queries: db.New(pool),
 	}
 }
 
-func NewOrderItemsRepo(pool *pgxpool.Pool) *orderItemsRepo {
+func newOrderItemsRepo(pool *pgxpool.Pool) *orderItemsRepo {
 	return &orderItemsRepo{
 		queries: db.New(pool),
 	}
@@ -51,11 +51,11 @@ func (o *orderRepo) fetchOrder(ctx context.Context, userID, orderID uuid.UUID) (
 	return &r, nil
 }
 
-func (o *orderRepo) fetchOrders(ctx context.Context, userID uuid.UUID, limit, offset int) ([]dbresp.Orders, error) {
+func (o *orderRepo) fetchOrders(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]dbresp.Orders, error) {
 	result, err := o.queries.FetchUserOrders(ctx, db.FetchUserOrdersParams{
 		UserID: pgtype.UUID{Bytes: userID, Valid: true},
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Limit:  limit,
+		Offset: offset,
 	})
 	if err != nil {
 		return nil, err

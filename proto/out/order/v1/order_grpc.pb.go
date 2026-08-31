@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	OrderService_CreateOrder_FullMethodName = "/order.v1.OrderService/CreateOrder"
 	OrderService_FetchOrder_FullMethodName  = "/order.v1.OrderService/FetchOrder"
+	OrderService_FetchOrders_FullMethodName = "/order.v1.OrderService/FetchOrders"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -29,6 +30,7 @@ const (
 type OrderServiceClient interface {
 	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*CreateOrderResponse, error)
 	FetchOrder(ctx context.Context, in *FetchOrderRequest, opts ...grpc.CallOption) (*FetchOrderResponse, error)
+	FetchOrders(ctx context.Context, in *FetchOrdersRequest, opts ...grpc.CallOption) (*FetchOrdersResponse, error)
 }
 
 type orderServiceClient struct {
@@ -59,12 +61,23 @@ func (c *orderServiceClient) FetchOrder(ctx context.Context, in *FetchOrderReque
 	return out, nil
 }
 
+func (c *orderServiceClient) FetchOrders(ctx context.Context, in *FetchOrdersRequest, opts ...grpc.CallOption) (*FetchOrdersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FetchOrdersResponse)
+	err := c.cc.Invoke(ctx, OrderService_FetchOrders_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility.
 type OrderServiceServer interface {
 	CreateOrder(context.Context, *CreateOrderRequest) (*CreateOrderResponse, error)
 	FetchOrder(context.Context, *FetchOrderRequest) (*FetchOrderResponse, error)
+	FetchOrders(context.Context, *FetchOrdersRequest) (*FetchOrdersResponse, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedOrderServiceServer) CreateOrder(context.Context, *CreateOrder
 }
 func (UnimplementedOrderServiceServer) FetchOrder(context.Context, *FetchOrderRequest) (*FetchOrderResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method FetchOrder not implemented")
+}
+func (UnimplementedOrderServiceServer) FetchOrders(context.Context, *FetchOrdersRequest) (*FetchOrdersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method FetchOrders not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 func (UnimplementedOrderServiceServer) testEmbeddedByValue()                      {}
@@ -138,6 +154,24 @@ func _OrderService_FetchOrder_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_FetchOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FetchOrdersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).FetchOrders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_FetchOrders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).FetchOrders(ctx, req.(*FetchOrdersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FetchOrder",
 			Handler:    _OrderService_FetchOrder_Handler,
+		},
+		{
+			MethodName: "FetchOrders",
+			Handler:    _OrderService_FetchOrders_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

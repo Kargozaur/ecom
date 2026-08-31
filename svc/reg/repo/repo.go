@@ -71,8 +71,11 @@ func (r *Repositories) LoginUser(ctx context.Context,
 }
 
 func (r *Repositories) CreateToken(ctx context.Context, id string, tokenHash string) error {
-	parsedID, _ := uuid.Parse(id)
-	err := r.refresh.CreateToken(ctx, r.querier(ctx), parsedID, tokenHash)
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+	err = r.refresh.CreateToken(ctx, r.querier(ctx), parsedID, tokenHash)
 	if err != nil {
 		return err
 	}

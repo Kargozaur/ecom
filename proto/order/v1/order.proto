@@ -5,6 +5,7 @@ option go_package = "proto/out/order/v1;orderv1";
 service OrderService {
     rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
     rpc FetchOrder(FetchOrderRequest) returns(FetchOrderResponse);
+    rpc FetchOrders(FetchOrdersRequest) returns(FetchOrdersResponse);
 }
 
 message CreateOrderRequest {
@@ -34,4 +35,18 @@ message FetchOrderResponse {
     string status = 2;
     string message = 3;
     repeated OrderItem items = 4;
+}
+
+message FetchOrdersRequest {
+    string user_id = 1;
+    string order_id = 2;
+    int32 limit = 3;
+    int32 offset = 4;
+}
+
+message FetchOrdersResponse {
+    string order_id = 1;
+    string status = 2;
+    float total_price = 3;
+    string created_at = 4;
 }
