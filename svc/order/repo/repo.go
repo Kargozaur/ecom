@@ -15,8 +15,8 @@ type txKey struct{}
 type Repo struct {
 	pool           *pgxpool.Pool
 	queries        *db.Queries
-	orderRepo      *orderRepo
-	orderItemsRepo *orderItemsRepo
+	orderRepo      orderRepo
+	orderItemsRepo orderItemsRepo
 }
 
 func NewRepo(pool *pgxpool.Pool) *Repo {

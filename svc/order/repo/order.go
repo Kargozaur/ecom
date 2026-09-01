@@ -15,12 +15,12 @@ type orderRepo struct{}
 
 type orderItemsRepo struct{}
 
-func newOrderRepo() *orderRepo {
-	return &orderRepo{}
+func newOrderRepo() orderRepo {
+	return orderRepo{}
 }
 
-func newOrderItemsRepo() *orderItemsRepo {
-	return &orderItemsRepo{}
+func newOrderItemsRepo() orderItemsRepo {
+	return orderItemsRepo{}
 }
 
 func (o *orderRepo) fetchOrder(ctx context.Context, queries *db.Queries, userID, orderID uuid.UUID) (*dbresp.FetchOrder, error) {
