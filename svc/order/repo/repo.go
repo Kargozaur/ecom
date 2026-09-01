@@ -22,8 +22,8 @@ type Repo struct {
 func NewRepo(pool *pgxpool.Pool) *Repo {
 	return &Repo{
 		queries:        db.New(pool),
-		orderRepo:      newOrderRepo(),
-		orderItemsRepo: newOrderItemsRepo(),
+		orderRepo:      orderRepo{},
+		orderItemsRepo: orderItemsRepo{},
 	}
 }
 
