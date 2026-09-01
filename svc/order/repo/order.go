@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"order/db"
 	dbresp "order/repo/db_resp"
 	"sync"
@@ -84,7 +85,8 @@ func (o *orderRepo) cancelOrder(ctx context.Context, queries *db.Queries, userID
 
 func (o *orderRepo) createOrder(ctx context.Context, queries *db.Queries, userID uuid.UUID, totalPrice float64) (dbresp.CreateOrderResponse, error) {
 	var x pgtype.Numeric
-	if err := x.Scan(totalPrice); err != nil {
+	strVal := fmt.Sprintf("%.2f", totalPrice)
+	if err := x.Scan(strVal); err != nil {
 		return dbresp.CreateOrderResponse{}, err
 	}
 	row, err := queries.CreateOrder(ctx, db.CreateOrderParams{
