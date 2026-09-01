@@ -6,11 +6,11 @@ import (
 )
 
 type FetchOrder struct {
-	OrderID    uuid.UUID `json:"order_id"`
-	TotalPrice float64   `json:"total_price"`
-	Status     string    `json:"status"`
 	CreatedAt  time.Time `json:"created_at"`
+	Status     string    `json:"status"`
 	Items      []Item    `json:"items"`
+	TotalPrice float64   `json:"total_price"`
+	OrderID    uuid.UUID `json:"order_id"`
 }
 
 type Item struct {
@@ -20,14 +20,14 @@ type Item struct {
 }
 
 type Orders struct {
-	OrderID    uuid.UUID
-	TotalPrice float64
-	Status     string
 	CreatedAt  time.Time
+	Status     string
+	TotalPrice float64
+	OrderID    uuid.UUID
 }
 
 type CreateOrderResponse struct {
 	ID         string
-	TotalPrice float64
 	Status     string
+	TotalPrice float64
 }

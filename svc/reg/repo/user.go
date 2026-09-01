@@ -10,9 +10,9 @@ import (
 )
 
 type CreateResponse struct {
+	CreatedAt time.Time
 	ID        string
 	Name      string
-	CreatedAt time.Time
 }
 
 type TokenResponse struct {
@@ -22,10 +22,10 @@ type TokenResponse struct {
 }
 
 type FetchProfileResponse struct {
+	CreatedAt time.Time
 	ID        string
 	Name      string
 	Email     string
-	CreatedAt time.Time
 }
 
 type userRepo struct{}

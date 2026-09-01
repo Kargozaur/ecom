@@ -13,15 +13,16 @@ import (
 type txKey struct{}
 
 type Repo struct {
-	pool           *pgxpool.Pool
-	queries        *db.Queries
 	orderRepo      orderRepo
 	orderItemsRepo orderItemsRepo
+	queries        *db.Queries
+	pool           *pgxpool.Pool
 }
 
 func NewRepo(pool *pgxpool.Pool) *Repo {
 	return &Repo{
 		queries:        db.New(pool),
+		pool:           pool,
 		orderRepo:      orderRepo{},
 		orderItemsRepo: orderItemsRepo{},
 	}

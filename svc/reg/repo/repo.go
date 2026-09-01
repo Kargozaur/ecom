@@ -13,10 +13,10 @@ import (
 type txKey struct{}
 
 type Repositories struct {
-	pool    *pgxpool.Pool
-	queries *db.Queries
 	user    userRepo
 	refresh refreshRepo
+	pool    *pgxpool.Pool
+	queries *db.Queries
 }
 
 func NewRepositories(pool *pgxpool.Pool) *Repositories {
