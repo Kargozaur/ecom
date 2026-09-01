@@ -15,14 +15,14 @@ type txKey struct{}
 type Repositories struct {
 	pool    *pgxpool.Pool
 	queries *db.Queries
-	user    *userRepo
-	refresh *refreshRepo
+	user    userRepo
+	refresh refreshRepo
 }
 
 func NewRepositories(pool *pgxpool.Pool) *Repositories {
 	queries := db.New(pool)
-	user := &userRepo{}
-	refresh := &refreshRepo{}
+	user := userRepo{}
+	refresh := refreshRepo{}
 	return &Repositories{user: user, refresh: refresh, pool: pool, queries: queries}
 }
 
