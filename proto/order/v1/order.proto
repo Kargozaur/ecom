@@ -9,7 +9,7 @@ service OrderService {
 }
 
 message CreateOrderRequest {
-    string user_id = 1;
+    string token = 1;
     repeated OrderItem items = 2;
 }
 
@@ -27,18 +27,18 @@ message OrderItem {
 }
 
 message FetchOrderRequest {
-    string user_id = 1;
+    string token = 1;
     string order_id = 2;
 }
 
 message FetchOrderResponse {
-    string status = 2;
-    string message = 3;
-    repeated OrderItem items = 4;
+    string status = 1;
+    string message = 2;
+    repeated OrderItem items = 3;
 }
 
 message FetchOrdersRequest {
-    string user_id = 1;
+    string token = 1;
     string order_id = 2;
     int32 limit = 3;
     int32 offset = 4;

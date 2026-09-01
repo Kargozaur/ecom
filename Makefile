@@ -1,6 +1,6 @@
 .PHONY: gateway-docker user-docker
 
-include proto/user.makefile
+include proto/grpc.makefile
 include svc/gateway/gateway.makefile
 include svc/reg/user.makefile
 include migrations/user/migrate.makefile
