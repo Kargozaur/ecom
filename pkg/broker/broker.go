@@ -2,12 +2,20 @@ package broker
 
 import (
 	"context"
+	"sync"
 
 	"github.com/segmentio/kafka-go"
 )
 
+type Message struct {
+	Key   []byte
+	Value []byte
+}
+
 type Writer struct {
-	writer *kafka.Writer
+	writer   *kafka.Writer
+	messages []*Message
+	mu       sync.RWMutex
 }
 
 type Reader struct {
@@ -47,15 +55,51 @@ func NewKafkaWriter(topic string, addr []string) (*Writer, error) {
 	}, nil
 }
 
-func (w *Writer) WriteMessage(ctx context.Context, key, value []byte) error {
-	return w.writer.WriteMessages(ctx, kafka.Message{
-		Key:   key,
-		Value: value,
-	})
+func (w *Writer) AddMessage(key, value []byte) {
+	w.mu.Lock()
+	w.messages = append(w.messages, &Message{Key: key, Value: value})
+	w.mu.Unlock()
 }
 
-func (r *Reader) ReadMessage(ctx context.Context) (kafka.Message, error) {
-	return r.reader.ReadMessage(ctx)
+func (w *Writer) Len() int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return len(w.messages)
+}
+
+func (w *Writer) clearLocked() {
+	w.messages = w.messages[:0]
+}
+
+func (w *Writer) WriteMessage(ctx context.Context) error {
+	if w.Len() == 0 {
+		return ErrNoMessages
+	}
+	kafkaMsgs := make([]kafka.Message, len(w.messages))
+	w.mu.Lock()
+	for i, m := range w.messages {
+		kafkaMsgs[i] = kafka.Message{
+			Key:   m.Key,
+			Value: m.Value,
+		}
+	}
+	w.clearLocked()
+	w.mu.Unlock()
+	if err := w.writer.WriteMessages(ctx, kafkaMsgs...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Reader) ReadMessage(ctx context.Context) (*Message, error) {
+	msg, err := r.reader.ReadMessage(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &Message{
+		Key:   msg.Key,
+		Value: msg.Value,
+	}, nil
 }
 
 func (w *Writer) Close() error {
