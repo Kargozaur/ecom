@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"order/db"
 	dbresp "order/repo/db_resp"
-	"sync"
+	"strconv"
 	"uuid"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -83,49 +83,54 @@ func (o *orderRepo) cancelOrder(ctx context.Context, queries *db.Queries, userID
 	return nil
 }
 
-func (o *orderRepo) createOrder(ctx context.Context, queries *db.Queries, userID uuid.UUID, totalPrice float64) (dbresp.CreateOrderResponse, error) {
-	var x pgtype.Numeric
-	strVal := fmt.Sprintf("%.2f", totalPrice)
-	if err := x.Scan(strVal); err != nil {
-		return dbresp.CreateOrderResponse{}, err
+func (o *orderRepo) createOrder(ctx context.Context, queries *db.Queries, userID uuid.UUID, totalPrice float64) (*dbresp.CreateOrderResponse, error) {
+	x, err := float64ToNumeric(totalPrice)
+	if err != nil {
+		return nil, err
 	}
 	row, err := queries.CreateOrder(ctx, db.CreateOrderParams{
 		UserID:     pgtype.UUID{Bytes: userID, Valid: true},
 		TotalPrice: x,
 	})
 	if err != nil {
-		return dbresp.CreateOrderResponse{}, err
+		return nil, err
 	}
 	resp := dbresp.CreateOrderResponse{
 		ID:         row.ID.String(),
 		TotalPrice: totalPrice,
 		Status:     string(row.Status),
 	}
-	return resp, nil
+	return &resp, nil
 }
 
-func (o *orderItemsRepo) insertOrderItems(ctx context.Context, queries *db.Queries, orderID uuid.UUID, itemID []uuid.UUID) error {
-	var wg sync.WaitGroup
-	l := len(itemID)
-	errChan := make(chan error, l)
-	for _, id := range itemID {
-		wg.Add(1)
-		go func(id uuid.UUID) {
-			defer wg.Done()
-			if err := queries.CreateOrderItems(ctx, db.CreateOrderItemsParams{
-				ItemID:  pgtype.UUID{Bytes: id, Valid: true},
-				OrderID: pgtype.UUID{Bytes: orderID, Valid: true},
-			}); err != nil {
-				errChan <- err
-			}
-		}(id)
-	}
-	wg.Wait()
-	close(errChan)
-	for err := range errChan {
+func (o *orderItemsRepo) insertOrderItems(ctx context.Context, queries *db.Queries, orderID uuid.UUID, items []dbresp.OrderItems) error {
+	itemIDs := make([]pgtype.UUID, len(items))
+	names := make([]string, len(items))
+	prices := make([]pgtype.Numeric, len(items))
+	quantities := make([]int32, len(items))
+
+	for i, item := range items {
+		price, err := float64ToNumeric(item.ItemPrice)
 		if err != nil {
-			return err
+			return fmt.Errorf("convert price for item %s: %w", item.ItemID, err)
 		}
+		itemIDs[i] = pgtype.UUID{Bytes: item.ItemID, Valid: true}
+		names[i] = item.ItemName
+		prices[i] = price
+		quantities[i] = item.Quantity
 	}
-	return nil
+
+	return queries.CreateOrderItems(ctx, db.CreateOrderItemsParams{
+		Column1: pgtype.UUID{Bytes: orderID, Valid: true},
+		Column2: itemIDs,
+		Column3: names,
+		Column4: prices,
+		Column5: quantities,
+	})
+}
+
+func float64ToNumeric(f float64) (pgtype.Numeric, error) {
+	var n pgtype.Numeric
+	err := n.Scan(strconv.FormatFloat(f, 'f', 2, 64))
+	return n, err
 }

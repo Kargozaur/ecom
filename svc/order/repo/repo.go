@@ -68,7 +68,7 @@ func (r *Repo) FetchOrder(ctx context.Context, userID, orderID uuid.UUID) (*dbre
 }
 
 func (r *Repo) CreateOrder(ctx context.Context, userID uuid.UUID,
-	price float64, itemIDs []uuid.UUID) (*dbresp.CreateOrderResponse, error) {
+	price float64, items []dbresp.OrderItems) (*dbresp.CreateOrderResponse, error) {
 	row, err := r.orderRepo.createOrder(ctx, r.querier(ctx), userID, price)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (r *Repo) CreateOrder(ctx context.Context, userID uuid.UUID,
 	if err != nil {
 		return nil, err
 	}
-	err = r.orderItemsRepo.insertOrderItems(ctx, r.querier(ctx), id, itemIDs)
+	err = r.orderItemsRepo.insertOrderItems(ctx, r.querier(ctx), id, items)
 	if err != nil {
 		return nil, err
 	}

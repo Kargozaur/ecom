@@ -31,3 +31,10 @@ type CreateOrderResponse struct {
 	Status     string
 	TotalPrice float64
 }
+
+type OrderItems struct {
+	ItemID    uuid.UUID
+	ItemName  string
+	ItemPrice float64
+	Quantity  int32
+}

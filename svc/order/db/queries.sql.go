@@ -76,17 +76,32 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Creat
 }
 
 const createOrderItems = `-- name: CreateOrderItems :exec
-insert into order_items (order_id, item_id)
-values ($1, $2)
+insert into order_items (order_id, item_id, item_name, item_price, quantity)
+select $1::uuid, rows.item_id, rows.item_name, rows.item_price, rows.quantity
+from rows from (
+    unnest($2::uuid[]),
+    unnest($3::text[]),
+    unnest($4::numeric[]),
+    unnest($5::int[])
+) as rows(item_id, item_name, item_price, quantity)
 `
 
 type CreateOrderItemsParams struct {
-	OrderID pgtype.UUID
-	ItemID  pgtype.UUID
+	Column1 pgtype.UUID
+	Column2 []pgtype.UUID
+	Column3 []string
+	Column4 []pgtype.Numeric
+	Column5 []int32
 }
 
 func (q *Queries) CreateOrderItems(ctx context.Context, arg CreateOrderItemsParams) error {
-	_, err := q.db.Exec(ctx, createOrderItems, arg.OrderID, arg.ItemID)
+	_, err := q.db.Exec(ctx, createOrderItems,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+	)
 	return err
 }
 

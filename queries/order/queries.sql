@@ -28,9 +28,14 @@ set status = $2
 where id = $1;
 
 -- name: CreateOrderItems :exec
-insert into order_items (order_id, item_id)
-values ($1, $2);
-
+insert into order_items (order_id, item_id, item_name, item_price, quantity)
+select $1::uuid, rows.item_id, rows.item_name, rows.item_price, rows.quantity
+from rows from (
+    unnest($2::uuid[]),
+    unnest($3::text[]),
+    unnest($4::numeric[]),
+    unnest($5::int[])
+) as rows(item_id, item_name, item_price, quantity);
 -- name: FetchOrder :one
 select o.id, o.total_price, o.status, o.created_at,
     coalesce(
