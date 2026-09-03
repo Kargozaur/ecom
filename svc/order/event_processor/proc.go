@@ -11,9 +11,10 @@ import (
 )
 
 type Processor struct {
-	wr *broker.Writer
-	rd *broker.Reader
-	th chan struct{}
+	wr   *broker.Writer
+	rd   *broker.Reader
+	th   chan struct{}
+	done chan struct{}
 }
 
 func NewProcessor() *Processor {
@@ -33,15 +34,17 @@ func NewProcessor() *Processor {
 		log.Fatalf("failed to create kafka writer: %s\n", err.Error())
 	}
 	return &Processor{
-		rd: rd,
-		wr: wr,
-		th: make(chan struct{}, 1),
+		rd:   rd,
+		wr:   wr,
+		th:   make(chan struct{}, 1),
+		done: make(chan struct{}),
 	}
 }
 
 func (p *Processor) Run(ctx context.Context) {
 	ticker := time.NewTicker(time.Second * 30)
 	defer ticker.Stop()
+	defer close(p.done)
 	for {
 		select {
 		case <-ctx.Done():
@@ -83,4 +86,11 @@ func (p *Processor) Append(key, value []byte) {
 		default:
 		}
 	}
+}
+
+func (p *Processor) Close() error {
+	rdErr := p.rd.Close()
+	<-p.done
+	wrErr := p.wr.Close()
+	return errors.Join(wrErr, rdErr)
 }
