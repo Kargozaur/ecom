@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -13,10 +14,10 @@ type Message struct {
 }
 
 type Writer struct {
-	writer   *kafka.Writer
-	messages []*Message
-	mu       sync.RWMutex
-	m        int
+	writer      *kafka.Writer
+	messages    []*Message
+	mu          sync.RWMutex
+	maxMessages int
 }
 
 type Reader struct {
@@ -49,11 +50,15 @@ func NewKafkaWriter(topic string, addr []string, maxMessages int) (*Writer, erro
 	}
 	return &Writer{
 		writer: &kafka.Writer{
-			Addr:     kafka.TCP(addr...),
-			Topic:    topic,
-			Balancer: &kafka.LeastBytes{},
+			Addr:         kafka.TCP(addr...),
+			Topic:        topic,
+			Balancer:     &kafka.LeastBytes{},
+			WriteTimeout: time.Second * 5,
+			ReadTimeout:  time.Second * 5,
+			MaxAttempts:  5,
 		},
-		m: maxMessages,
+		messages:    make([]*Message, maxMessages),
+		maxMessages: maxMessages,
 	}, nil
 }
 
@@ -69,32 +74,31 @@ func (w *Writer) Len() int {
 	return len(w.messages)
 }
 
-func (w *Writer) MaxLen() int {
-	return w.m
-}
-
 func (w *Writer) clearLocked() {
 	w.messages = w.messages[:0]
 }
 
+func (w *Writer) MaxLen() int {
+	return w.maxMessages
+}
+
 func (w *Writer) WriteMessage(ctx context.Context) error {
-	w.mu.Lock()
-	m := w.Len()
-	if m == 0 {
+	if w.Len() == 0 {
 		return ErrNoMessages
 	}
-	kafkaMsgs := make([]kafka.Message, m)
+	kafkaMsgs := make([]kafka.Message, len(w.messages))
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	for i, m := range w.messages {
 		kafkaMsgs[i] = kafka.Message{
 			Key:   m.Key,
 			Value: m.Value,
 		}
 	}
-	w.clearLocked()
-	w.mu.Unlock()
 	if err := w.writer.WriteMessages(ctx, kafkaMsgs...); err != nil {
 		return err
 	}
+	w.clearLocked()
 	return nil
 }
 
