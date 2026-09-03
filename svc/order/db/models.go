@@ -108,15 +108,6 @@ type Event struct {
 	UpdatedAt pgtype.Timestamp
 }
 
-type Item struct {
-	ID          pgtype.UUID
-	Name        string
-	Description string
-	Price       pgtype.Numeric
-	CreatedAt   pgtype.Timestamp
-	UpdatedAt   pgtype.Timestamp
-}
-
 type Order struct {
 	ID         pgtype.UUID
 	UserID     pgtype.UUID
@@ -127,6 +118,9 @@ type Order struct {
 }
 
 type OrderItem struct {
-	OrderID pgtype.UUID
-	ItemID  pgtype.UUID
+	OrderID   pgtype.UUID
+	ItemID    pgtype.UUID
+	ItemName  string
+	ItemPrice pgtype.Numeric
+	Quantity  int32
 }

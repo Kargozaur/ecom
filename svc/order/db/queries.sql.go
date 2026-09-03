@@ -91,29 +91,24 @@ func (q *Queries) CreateOrderItems(ctx context.Context, arg CreateOrderItemsPara
 }
 
 const fetchOrder = `-- name: FetchOrder :one
-with item_counts as (
-    select o.id as order_id, o.total_price, o.status, o.created_at,
-        i.id as item_id, i.name, i.price, count(oi.item_id) as quantity
-    from orders o
-    left join order_items oi on o.id = oi.order_id
-    left join items i on oi.item_id = i.id
-    where o.id = $1 and o.user_id = $2
-    group by o.id, i.id, i.name, i.price
-)
-select
-    order_id as id,
-    total_price,
-    status,
-    created_at,
+select o.id, o.total_price, o.status, o.created_at,
     coalesce(
-        json_agg(
-            json_build_object('name', name, 'price', price, 'quantity', quantity)
-            order by quantity desc
-        ) filter (where item_id is not null),
+        (
+            select json_agg(
+                json_build_object(
+                    'name', oi.item_name,
+                    'price', oi.item_price,
+                    'quantity', oi.quantity
+                )
+                order by oi.quantity desc
+            )
+            from order_items oi
+            where oi.order_id = o.id
+        ),
         '[]'
     )::jsonb as items
-from item_counts
-group by order_id, total_price, status, created_at
+from orders o
+where o.id = $1 and o.user_id = $2
 `
 
 type FetchOrderParams struct {
@@ -190,24 +185,19 @@ func (q *Queries) FetchUserOrders(ctx context.Context, arg FetchUserOrdersParams
 
 const selectEventForUpdate = `-- name: SelectEventForUpdate :many
 select id, status from events
-where status = $1
+where status = 'payment_pending'
 order by created_at
-limit $2
+limit $1
 for update skip locked
 `
-
-type SelectEventForUpdateParams struct {
-	Status OrderStatus
-	Limit  int32
-}
 
 type SelectEventForUpdateRow struct {
 	ID     pgtype.UUID
 	Status OrderStatus
 }
 
-func (q *Queries) SelectEventForUpdate(ctx context.Context, arg SelectEventForUpdateParams) ([]SelectEventForUpdateRow, error) {
-	rows, err := q.db.Query(ctx, selectEventForUpdate, arg.Status, arg.Limit)
+func (q *Queries) SelectEventForUpdate(ctx context.Context, limit int32) ([]SelectEventForUpdateRow, error) {
+	rows, err := q.db.Query(ctx, selectEventForUpdate, limit)
 	if err != nil {
 		return nil, err
 	}

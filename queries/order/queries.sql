@@ -32,29 +32,24 @@ insert into order_items (order_id, item_id)
 values ($1, $2);
 
 -- name: FetchOrder :one
-with item_counts as (
-    select o.id as order_id, o.total_price, o.status, o.created_at,
-        i.id as item_id, i.name, i.price, count(oi.item_id) as quantity
-    from orders o
-    left join order_items oi on o.id = oi.order_id
-    left join items i on oi.item_id = i.id
-    where o.id = $1 and o.user_id = $2
-    group by o.id, i.id, i.name, i.price
-)
-select
-    order_id as id,
-    total_price,
-    status,
-    created_at,
+select o.id, o.total_price, o.status, o.created_at,
     coalesce(
-        json_agg(
-            json_build_object('name', name, 'price', price, 'quantity', quantity)
-            order by quantity desc
-        ) filter (where item_id is not null),
+        (
+            select json_agg(
+                json_build_object(
+                    'name', oi.item_name,
+                    'price', oi.item_price,
+                    'quantity', oi.quantity
+                )
+                order by oi.quantity desc
+            )
+            from order_items oi
+            where oi.order_id = o.id
+        ),
         '[]'
     )::jsonb as items
-from item_counts
-group by order_id, total_price, status, created_at;
+from orders o
+where o.id = $1 and o.user_id = $2;
 
 -- name: SelectOrderForUpdate :one
 select id, user_id, status from orders
