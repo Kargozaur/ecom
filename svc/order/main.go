@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	processor "order/event_processor"
 	"order/server"
 	"pkg/envreader"
 	orderv1 "proto/out/order/v1"
@@ -41,6 +42,8 @@ func main() {
 	}
 	defer listener.Close()
 	grpcServer := initServer()
+	proc := processor.NewProcessor()
+	go proc.Run(ctx)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatal(err.Error())
 	}

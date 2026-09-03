@@ -16,6 +16,7 @@ type Writer struct {
 	writer   *kafka.Writer
 	messages []*Message
 	mu       sync.RWMutex
+	m        int
 }
 
 type Reader struct {
@@ -39,7 +40,7 @@ func NewKafkaReader(topic string, brokers []string, partition int) (*Reader, err
 	}, nil
 }
 
-func NewKafkaWriter(topic string, addr []string) (*Writer, error) {
+func NewKafkaWriter(topic string, addr []string, maxMessages int) (*Writer, error) {
 	if len(addr) == 0 {
 		return nil, ErrNoBrokers
 	}
@@ -52,6 +53,7 @@ func NewKafkaWriter(topic string, addr []string) (*Writer, error) {
 			Topic:    topic,
 			Balancer: &kafka.LeastBytes{},
 		},
+		m: maxMessages,
 	}, nil
 }
 
@@ -67,16 +69,21 @@ func (w *Writer) Len() int {
 	return len(w.messages)
 }
 
+func (w *Writer) MaxLen() int {
+	return w.m
+}
+
 func (w *Writer) clearLocked() {
 	w.messages = w.messages[:0]
 }
 
 func (w *Writer) WriteMessage(ctx context.Context) error {
-	if w.Len() == 0 {
+	w.mu.Lock()
+	m := w.Len()
+	if m == 0 {
 		return ErrNoMessages
 	}
-	kafkaMsgs := make([]kafka.Message, len(w.messages))
-	w.mu.Lock()
+	kafkaMsgs := make([]kafka.Message, m)
 	for i, m := range w.messages {
 		kafkaMsgs[i] = kafka.Message{
 			Key:   m.Key,
