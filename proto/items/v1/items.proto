@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package items.v1;
+option go_package = "proto/out/items/v1;itemsv1";
+
+service ItemsService {
+    rpc GetItem(GetItemRequest) returns (GetItemResponse);
+    rpc GetItemInfo(GetItemInfoRequest) returns (GetItemInfoResponse);
+    rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
+}
+
+message GetItemRequest {
+    string item_id = 1;
+}
+
+message GetItemResponse {
+    string name = 1;
+    float price = 2;
+    string description = 3;
+}
+
+message GetItemInfoRequest {
+    string item_id = 1;
+}
+
+message GetItemInfoResponse {
+    Item item = 1;
+}
+
+message GetItemsRequest {
+    repeated string categories = 1;
+    int32 limit = 2;
+    int32 offset = 3;
+}
+
+message GetItemsResponse {
+    repeated Item items = 1;
+}
+
+message Item {
+    string item_id = 1;
+    string name = 2;
+    float price = 3;
+    string description = 4;
+    repeated string categories = 5;
+}

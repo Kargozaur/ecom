@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package order.v1;
+
 option go_package = "proto/out/order/v1;orderv1";
 service OrderService {
     rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
