@@ -6,8 +6,11 @@ import (
 	"gateway/handlers/health"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"pkg/token"
 	userv1 "proto/out/user/v1"
+	"syscall"
 	"time"
 )
 
@@ -31,14 +34,14 @@ func srvConfig(clients *Conns) *http.Server {
 }
 
 func main() {
-	ctx := context.Background()
-	clients := initClients(ctx)
-	if clients == nil {
-		log.Fatal("Failed to initialize grpc clients")
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	app, err := NewApp(ctx)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
-	defer clients.Close()
-	srv := srvConfig(clients)
-	if err := srv.ListenAndServe(); err != nil {
+	defer app.Close()
+	if err := app.Run(ctx); err != nil {
 		log.Fatalf("Failed to start the server: %s", err.Error())
 	}
 }

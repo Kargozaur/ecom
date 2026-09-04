@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"log"
-	"net"
+	"os"
+	"os/signal"
 	"pkg/envreader"
 	userv1 "proto/out/user/v1"
 	"reg/server"
+	"syscall"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
@@ -32,22 +34,14 @@ func initServer(pool *pgxpool.Pool) (*grpc.Server, error) {
 }
 
 func main() {
-	ctx := context.Background()
-	pool, err := initDB(ctx)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	app, err := NewApp(ctx, ":50000")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	defer pool.Close()
-	listener, err := net.Listen("tcp", ":50000")
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	defer listener.Close()
-	serv, err := initServer(pool)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	if err := serv.Serve(listener); err != nil {
-		log.Fatalf("Failed to serve %s\n", err.Error())
+	defer app.Close()
+	if err := app.Run(ctx); err != nil {
+		log.Println(err.Error())
 	}
 }
