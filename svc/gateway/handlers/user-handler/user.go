@@ -3,7 +3,7 @@ package userhandler
 import (
 	"errors"
 	userstructs "gateway/handlers/user-handler/user-structs"
-	"gateway/middleware"
+	"gateway/types"
 	"net/http"
 	"pkg/credvalidator"
 	"pkg/json"
@@ -42,7 +42,7 @@ func (u *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	token := r.Context().Value(middleware.TokenKey).(string)
+	token := r.Context().Value(types.TokenKey).(string)
 	data := &userv1.GetProfileRequest{Jwt: token}
 	req, err := u.userClient.GetProfile(r.Context(), data)
 	if err != nil {

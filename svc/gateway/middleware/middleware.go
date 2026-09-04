@@ -2,14 +2,11 @@ package middleware
 
 import (
 	"context"
+	"gateway/types"
 	"net/http"
 	"pkg/token"
 	"strings"
 )
-
-type ContextKey string
-
-const TokenKey ContextKey = "jwtToken"
 
 type middleware struct {
 	validator token.ITokenValidator
@@ -37,14 +34,14 @@ func (m *middleware) SetToken(next http.Handler) http.HandlerFunc {
 			}
 			jwtToken = cut
 		}
-		ctx := context.WithValue(r.Context(), TokenKey, jwtToken)
+		ctx := context.WithValue(r.Context(), types.TokenKey, jwtToken)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
 func (m *middleware) SetUserID(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cl := r.Context().Value(TokenKey)
+		cl := r.Context().Value(types.TokenKey)
 		jwtToken, ok := cl.(string)
 		if !ok {
 			http.Error(w, "invalid token", http.StatusBadRequest)

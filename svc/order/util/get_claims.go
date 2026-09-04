@@ -2,12 +2,12 @@ package util
 
 import (
 	"context"
-	"order/interceptor"
+	"order/types"
 	"pkg/token"
 )
 
 func GetClaims(ctx context.Context) (*token.Claims, error) {
-	claims, ok := ctx.Value(interceptor.ContextKey{}).(*token.Claims)
+	claims, ok := ctx.Value(types.TokenKey{}).(*token.Claims)
 	if !ok {
 		return nil, token.ErrInvalidClaims
 	}

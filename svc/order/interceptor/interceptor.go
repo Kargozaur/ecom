@@ -2,14 +2,13 @@ package interceptor
 
 import (
 	"context"
+	"order/types"
 	"pkg/token"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-type ContextKey struct{}
 
 func TokenInterceptor(validator token.ITokenValidator) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
@@ -22,7 +21,7 @@ func TokenInterceptor(validator token.ITokenValidator) grpc.UnaryServerIntercept
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
-		ctx = context.WithValue(ctx, ContextKey{}, claims)
+		ctx = context.WithValue(ctx, types.TokenKey{}, claims)
 		return handler(ctx, req)
 	}
 }
