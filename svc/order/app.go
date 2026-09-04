@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	processor "order/event_processor"
+	"pkg/token"
 	"sync"
 	"time"
 
@@ -18,6 +19,14 @@ type App struct {
 	listener   net.Listener
 	grpcServer *grpc.Server
 	proc       *processor.Processor
+}
+
+func newTokenValidator() (*token.TokenValidator, error) {
+	config, err := token.NewTokenConfig()
+	if err != nil {
+		return nil, err
+	}
+	return token.NewTokenValidator(config), nil
 }
 
 func NewApp(ctx context.Context) (*App, error) {

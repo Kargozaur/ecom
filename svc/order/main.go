@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"order/interceptor"
 	"order/server"
 	"os"
 	"os/signal"
@@ -24,7 +25,11 @@ func initDB(ctx context.Context) (*pgxpool.Pool, error) {
 }
 
 func initServer() *grpc.Server {
-	grpcServer := grpc.NewServer()
+	validator, err := newTokenValidator()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptor.TokenInterceptor(validator)))
 	srv := &server.GRPCServer{}
 	orderv1.RegisterOrderServiceServer(grpcServer, srv)
 	return grpcServer
