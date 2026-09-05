@@ -135,7 +135,7 @@ func (x *CreateOrderResponse) GetMessage() string {
 
 type OrderItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProductId     string                 `protobuf:"bytes,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	ItemId        string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Quantity      int32                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
 	Price         float32                `protobuf:"fixed32,4,opt,name=price,proto3" json:"price,omitempty"`
@@ -173,9 +173,9 @@ func (*OrderItem) Descriptor() ([]byte, []int) {
 	return file_order_v1_order_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *OrderItem) GetProductId() string {
+func (x *OrderItem) GetItemId() string {
 	if x != nil {
-		return x.ProductId
+		return x.ItemId
 	}
 	return ""
 }
@@ -256,7 +256,7 @@ func (x *FetchOrderRequest) GetOrderId() string {
 type FetchOrderResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	Items         []*OrderItem           `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -299,9 +299,9 @@ func (x *FetchOrderResponse) GetStatus() string {
 	return ""
 }
 
-func (x *FetchOrderResponse) GetMessage() string {
+func (x *FetchOrderResponse) GetCreatedAt() string {
 	if x != nil {
-		return x.Message
+		return x.CreatedAt
 	}
 	return ""
 }
@@ -317,8 +317,7 @@ type FetchOrdersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	OrderId       string                 `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        int32                  `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
+	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -367,16 +366,9 @@ func (x *FetchOrdersRequest) GetOrderId() string {
 	return ""
 }
 
-func (x *FetchOrdersRequest) GetLimit() int32 {
+func (x *FetchOrdersRequest) GetPage() int32 {
 	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-func (x *FetchOrdersRequest) GetOffset() int32 {
-	if x != nil {
-		return x.Offset
+		return x.Page
 	}
 	return 0
 }
@@ -386,7 +378,6 @@ type FetchOrdersResponse struct {
 	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	TotalPrice    float32                `protobuf:"fixed32,3,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -442,13 +433,6 @@ func (x *FetchOrdersResponse) GetTotalPrice() float32 {
 	return 0
 }
 
-func (x *FetchOrdersResponse) GetCreatedAt() string {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return ""
-}
-
 var File_order_v1_order_proto protoreflect.FileDescriptor
 
 const file_order_v1_order_proto_rawDesc = "" +
@@ -460,32 +444,29 @@ const file_order_v1_order_proto_rawDesc = "" +
 	"\x13CreateOrderResponse\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"p\n" +
-	"\tOrderItem\x12\x1d\n" +
-	"\n" +
-	"product_id\x18\x01 \x01(\tR\tproductId\x12\x12\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"j\n" +
+	"\tOrderItem\x12\x17\n" +
+	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
 	"\bquantity\x18\x03 \x01(\x05R\bquantity\x12\x14\n" +
 	"\x05price\x18\x04 \x01(\x02R\x05price\"D\n" +
 	"\x11FetchOrderRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x19\n" +
-	"\border_id\x18\x02 \x01(\tR\aorderId\"q\n" +
+	"\border_id\x18\x02 \x01(\tR\aorderId\"v\n" +
 	"\x12FetchOrderResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12)\n" +
-	"\x05items\x18\x03 \x03(\v2\x13.order.v1.OrderItemR\x05items\"s\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x02 \x01(\tR\tcreatedAt\x12)\n" +
+	"\x05items\x18\x03 \x03(\v2\x13.order.v1.OrderItemR\x05items\"Y\n" +
 	"\x12FetchOrdersRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x19\n" +
-	"\border_id\x18\x02 \x01(\tR\aorderId\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x04 \x01(\x05R\x06offset\"\x88\x01\n" +
+	"\border_id\x18\x02 \x01(\tR\aorderId\x12\x12\n" +
+	"\x04page\x18\x03 \x01(\x05R\x04page\"i\n" +
 	"\x13FetchOrdersResponse\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x1f\n" +
 	"\vtotal_price\x18\x03 \x01(\x02R\n" +
-	"totalPrice\x12\x1d\n" +
-	"\n" +
-	"created_at\x18\x04 \x01(\tR\tcreatedAt2\xef\x01\n" +
+	"totalPrice2\xef\x01\n" +
 	"\fOrderService\x12J\n" +
 	"\vCreateOrder\x12\x1c.order.v1.CreateOrderRequest\x1a\x1d.order.v1.CreateOrderResponse\x12G\n" +
 	"\n" +

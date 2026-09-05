@@ -4,6 +4,7 @@ import (
 	"context"
 	"order/types"
 	"pkg/token"
+	"uuid"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -21,7 +22,11 @@ func TokenInterceptor(validator token.ITokenValidator) grpc.UnaryServerIntercept
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
-		ctx = context.WithValue(ctx, types.TokenKey{}, claims)
+		userID, err := uuid.Parse(claims.UserID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to parse userd id")
+		}
+		ctx = context.WithValue(ctx, types.UserIDKey{}, userID)
 		return handler(ctx, req)
 	}
 }

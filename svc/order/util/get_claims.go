@@ -7,7 +7,7 @@ import (
 )
 
 func GetClaims(ctx context.Context) (*token.Claims, error) {
-	claims, ok := ctx.Value(types.TokenKey{}).(*token.Claims)
+	claims, ok := ctx.Value(types.UserIDKey{}).(*token.Claims)
 	if !ok {
 		return nil, token.ErrInvalidClaims
 	}

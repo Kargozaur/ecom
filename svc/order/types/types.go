@@ -1,3 +1,3 @@
 package types
 
-type TokenKey struct{}
+type UserIDKey struct{}
