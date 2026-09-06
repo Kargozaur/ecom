@@ -15,6 +15,7 @@ type txKey struct{}
 type Repo struct {
 	orderRepo      orderRepo
 	orderItemsRepo orderItemsRepo
+	eventRepo      eventRepo
 	queries        *db.Queries
 	pool           *pgxpool.Pool
 }
@@ -90,6 +91,22 @@ func (r *Repo) CreateOrder(ctx context.Context, userID uuid.UUID,
 
 func (r *Repo) CancelOrder(ctx context.Context, userID, orderID uuid.UUID) error {
 	err := r.orderRepo.cancelOrder(ctx, r.querier(ctx), userID, orderID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Repo) CreateEvent(ctx context.Context, orderID uuid.UUID) error {
+	err := r.eventRepo.CreateEvent(ctx, r.querier(ctx), orderID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Repo) UpdateEvent(ctx context.Context, limit int32) error {
+	err := r.eventRepo.UpdateEvent(ctx, r.querier(ctx), limit)
 	if err != nil {
 		return err
 	}
