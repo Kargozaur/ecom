@@ -18,8 +18,8 @@ type Service struct {
 	proc *processor.Processor
 }
 
-func NewService(repo *repo.Repo) *Service {
-	return &Service{repo: repo}
+func NewService(repo *repo.Repo, proc *processor.Processor) *Service {
+	return &Service{repo: repo, proc: proc}
 }
 
 func (s *Service) GetOrder(ctx context.Context, userID, orderID string) (*orderv1.FetchOrderResponse, error) {

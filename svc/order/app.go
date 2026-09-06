@@ -40,9 +40,8 @@ func NewApp(ctx context.Context) (*App, error) {
 		pool.Close()
 		return nil, errors.New("listener: " + err.Error())
 	}
-
-	grpcServer := initServer()
 	proc := processor.NewProcessor()
+	grpcServer := initServer(pool, proc)
 
 	return &App{
 		pool:       pool,

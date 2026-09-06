@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	processor "order/event_processor"
 	"order/interceptor"
 	"order/server"
 	"os"
@@ -24,13 +25,13 @@ func initDB(ctx context.Context) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func initServer() *grpc.Server {
+func initServer(pool *pgxpool.Pool, proc *processor.Processor) *grpc.Server {
 	validator, err := newTokenValidator()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptor.TokenInterceptor(validator)))
-	srv := &server.GRPCServer{}
+	srv := server.NewGRPCServer(pool, proc)
 	orderv1.RegisterOrderServiceServer(grpcServer, srv)
 	return grpcServer
 }
