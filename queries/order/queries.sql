@@ -10,21 +10,20 @@ insert into orders (user_id, total_price)
 values ($1, $2)
 returning id, total_price, status;
 
--- name: CreateEvent :one
-insert into events(order_id, status, event_type)
-values ($1, $2, $3)
-returning id, status;
+-- name: CreateEvent :exec
+insert into events(order_id, event_type)
+values ($1, $2);
 
 -- name: SelectEventForUpdate :many
-select id, status from events
-where status = 'payment_pending'
+select id, event_type from events
+where event_type = 'payment_pending'
 order by created_at
 limit $1
 for update skip locked;
 
--- name: UpdateEvent :exec
+-- name: UpdateEvent :batchexec
 update events
-set status = $2
+set event_type = $2
 where id = $1;
 
 -- name: CreateOrderItems :exec

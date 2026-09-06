@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"order/db"
 	dbresp "order/repo/db_resp"
@@ -15,6 +16,8 @@ import (
 type orderRepo struct{}
 
 type orderItemsRepo struct{}
+
+type eventRepo struct{}
 
 func (o *orderRepo) fetchOrder(ctx context.Context, queries *db.Queries, userID, orderID uuid.UUID) (*dbresp.FetchOrder, error) {
 	result, err := queries.FetchOrder(ctx, db.FetchOrderParams{
@@ -127,6 +130,35 @@ func (o *orderItemsRepo) insertOrderItems(ctx context.Context, queries *db.Queri
 		Column4: prices,
 		Column5: quantities,
 	})
+}
+
+func (e *eventRepo) CreateEvent(ctx context.Context, queries *db.Queries, orderID uuid.UUID) error {
+	return queries.CreateEvent(ctx, db.CreateEventParams{
+		OrderID:   pgtype.UUID{Bytes: orderID, Valid: true},
+		EventType: db.EventTypePaymentPending,
+	})
+
+}
+
+func (e *eventRepo) UpdateEvent(ctx context.Context, queries *db.Queries, limit int32) error {
+	rows, err := queries.SelectEventForUpdate(ctx, limit)
+	if err != nil {
+		return err
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+	in := make([]db.UpdateEventParams, len(rows))
+	for _, row := range rows {
+		in = append(in, db.UpdateEventParams{
+			ID:        row.ID,
+			EventType: db.EventTypePaymentCompleted,
+		})
+	}
+	if res := queries.UpdateEvent(ctx, in); res == nil {
+		return errors.New("failed to update events")
+	}
+	return nil
 }
 
 func float64ToNumeric(f float64) (pgtype.Numeric, error) {

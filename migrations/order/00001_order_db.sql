@@ -22,7 +22,6 @@ create type event_type as enum ('payment_completed', 'payment_pending', 'payment
 create table if not exists events (
     id uuid primary key default uuidv7(),
     order_id uuid not null,
-    status order_status not null,
     event_type event_type not null,
     created_at timestamp not null default (now() at time zone 'UTC'),
     updated_at timestamp not null default (now() at time zone 'UTC')
