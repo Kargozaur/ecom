@@ -102,7 +102,6 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 type Event struct {
 	ID        pgtype.UUID
 	OrderID   pgtype.UUID
-	Status    OrderStatus
 	EventType EventType
 	CreatedAt pgtype.Timestamp
 	UpdatedAt pgtype.Timestamp

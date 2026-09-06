@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	processor "order/event_processor"
 	"order/repo"
 	dbresp "order/repo/db_resp"
 	"order/types"
@@ -12,6 +13,7 @@ import (
 
 type Service struct {
 	repo *repo.Repo
+	proc *processor.Processor
 }
 
 func NewService(repo *repo.Repo) *Service {
@@ -31,18 +33,7 @@ func (s *Service) GetOrder(ctx context.Context, userID, orderID string) (*orderv
 	if err != nil {
 		return nil, err
 	}
-	response := &orderv1.FetchOrderResponse{}
-	l := len(res.Items)
-	response.Items = make([]*orderv1.OrderItem, l)
-	for i := range l {
-		response.Items[i] = &orderv1.OrderItem{
-			Name:     res.Items[i].Name,
-			Quantity: int32(res.Items[i].Quantity),
-			Price:    float32(res.Items[i].Price),
-		}
-	}
-	response.Status = res.Status
-	response.CreatedAt = res.CreatedAt.String()
+	response := s.buildResponseItem(res)
 	return response, nil
 }
 
@@ -51,21 +42,13 @@ func (s *Service) GetOrders(ctx context.Context, userID string, page int32) ([]*
 	if err != nil {
 		return nil, err
 	}
-	limit := page
-	offset := ((limit - 1) * 10)
+	limit := int32(10)
+	offset := (page - 1) * limit
 	res, err := s.repo.FetchOrders(ctx, user, limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	l := len(res)
-	response := make([]*orderv1.FetchOrdersResponse, l)
-	for i := range l {
-		response[i] = &orderv1.FetchOrdersResponse{
-			OrderId:    res[i].OrderID.String(),
-			Status:     res[i].Status,
-			TotalPrice: float32(res[i].TotalPrice),
-		}
-	}
+	response := s.buildResponseItems(res)
 	return response, nil
 }
 
@@ -122,4 +105,30 @@ func (s *Service) buildItems(params *orderv1.CreateOrderRequest) []dbresp.OrderI
 		})
 	}
 	return res
+}
+
+func (s *Service) buildResponseItems(items []dbresp.Orders) []*orderv1.FetchOrdersResponse {
+	res := make([]*orderv1.FetchOrdersResponse, 0, len(items))
+	for _, item := range items {
+		res = append(res, &orderv1.FetchOrdersResponse{
+			OrderId:    item.OrderID.String(),
+			Status:     item.Status,
+			TotalPrice: float32(item.TotalPrice),
+		})
+	}
+	return res
+}
+
+func (s *Service) buildResponseItem(queryRes *dbresp.FetchOrder) *orderv1.FetchOrderResponse {
+	response := &orderv1.FetchOrderResponse{}
+	for _, item := range queryRes.Items {
+		response.Items = append(response.Items, &orderv1.OrderItem{
+			Name:     item.Name,
+			Quantity: int32(item.Quantity),
+			Price:    float32(item.Price),
+		})
+	}
+	response.Status = queryRes.Status
+	response.CreatedAt = queryRes.CreatedAt.String()
+	return response
 }

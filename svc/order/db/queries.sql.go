@@ -27,28 +27,19 @@ func (q *Queries) CancelOrder(ctx context.Context, arg CancelOrderParams) error 
 	return err
 }
 
-const createEvent = `-- name: CreateEvent :one
-insert into events(order_id, status, event_type)
-values ($1, $2, $3)
-returning id, status
+const createEvent = `-- name: CreateEvent :exec
+insert into events(order_id, event_type)
+values ($1, $2)
 `
 
 type CreateEventParams struct {
 	OrderID   pgtype.UUID
-	Status    OrderStatus
 	EventType EventType
 }
 
-type CreateEventRow struct {
-	ID     pgtype.UUID
-	Status OrderStatus
-}
-
-func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (CreateEventRow, error) {
-	row := q.db.QueryRow(ctx, createEvent, arg.OrderID, arg.Status, arg.EventType)
-	var i CreateEventRow
-	err := row.Scan(&i.ID, &i.Status)
-	return i, err
+func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error {
+	_, err := q.db.Exec(ctx, createEvent, arg.OrderID, arg.EventType)
+	return err
 }
 
 const createOrder = `-- name: CreateOrder :one
@@ -199,16 +190,16 @@ func (q *Queries) FetchUserOrders(ctx context.Context, arg FetchUserOrdersParams
 }
 
 const selectEventForUpdate = `-- name: SelectEventForUpdate :many
-select id, status from events
-where status = 'payment_pending'
+select id, event_type from events
+where event_type = 'payment_pending'
 order by created_at
 limit $1
 for update skip locked
 `
 
 type SelectEventForUpdateRow struct {
-	ID     pgtype.UUID
-	Status OrderStatus
+	ID        pgtype.UUID
+	EventType EventType
 }
 
 func (q *Queries) SelectEventForUpdate(ctx context.Context, limit int32) ([]SelectEventForUpdateRow, error) {
@@ -220,7 +211,7 @@ func (q *Queries) SelectEventForUpdate(ctx context.Context, limit int32) ([]Sele
 	var items []SelectEventForUpdateRow
 	for rows.Next() {
 		var i SelectEventForUpdateRow
-		if err := rows.Scan(&i.ID, &i.Status); err != nil {
+		if err := rows.Scan(&i.ID, &i.EventType); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -252,20 +243,4 @@ func (q *Queries) SelectOrderForUpdate(ctx context.Context, arg SelectOrderForUp
 	var i SelectOrderForUpdateRow
 	err := row.Scan(&i.ID, &i.UserID, &i.Status)
 	return i, err
-}
-
-const updateEvent = `-- name: UpdateEvent :exec
-update events
-set status = $2
-where id = $1
-`
-
-type UpdateEventParams struct {
-	ID     pgtype.UUID
-	Status OrderStatus
-}
-
-func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) error {
-	_, err := q.db.Exec(ctx, updateEvent, arg.ID, arg.Status)
-	return err
 }
