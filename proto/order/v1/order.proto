@@ -45,6 +45,10 @@ message FetchOrdersRequest {
 }
 
 message FetchOrdersResponse {
+    repeated Order orders = 1;
+}
+
+message Order {
     string order_id = 1;
     string status = 2;
     float total_price = 3;

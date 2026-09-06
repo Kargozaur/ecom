@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"order/db"
 	processor "order/event_processor"
 	"order/repo"
 	dbresp "order/repo/db_resp"
@@ -22,16 +23,16 @@ func NewService(repo *repo.Repo, proc *processor.Processor) *Service {
 	return &Service{repo: repo, proc: proc}
 }
 
-func (s *Service) GetOrder(ctx context.Context, userID, orderID string) (*orderv1.FetchOrderResponse, error) {
-	user, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, err
+func (s *Service) GetOrder(ctx context.Context, orderID string) (*orderv1.FetchOrderResponse, error) {
+	userID, ok := ctx.Value(types.UserIDKey{}).(uuid.UUID)
+	if !ok {
+		return nil, errors.New("failed to get user id")
 	}
 	order, err := uuid.Parse(orderID)
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.repo.FetchOrder(ctx, user, order)
+	res, err := s.repo.FetchOrder(ctx, userID, order)
 	if err != nil {
 		return nil, err
 	}
@@ -39,14 +40,14 @@ func (s *Service) GetOrder(ctx context.Context, userID, orderID string) (*orderv
 	return response, nil
 }
 
-func (s *Service) GetOrders(ctx context.Context, userID string, page int32) ([]*orderv1.FetchOrdersResponse, error) {
-	user, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, err
+func (s *Service) GetOrders(ctx context.Context, page int32) (*orderv1.FetchOrdersResponse, error) {
+	userID, ok := ctx.Value(types.UserIDKey{}).(uuid.UUID)
+	if !ok {
+		return nil, errors.New("failed to get user id")
 	}
 	limit := int32(10)
 	offset := (page - 1) * limit
-	res, err := s.repo.FetchOrders(ctx, user, limit, offset)
+	res, err := s.repo.FetchOrders(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +96,26 @@ func (s *Service) CreateOrder(ctx context.Context, params *orderv1.CreateOrderRe
 	return response, nil
 }
 
+func (s *Service) CancelOrder(ctx context.Context, orderID string) (*orderv1.CancelOrderResponse, error) {
+	userID, ok := ctx.Value(types.UserIDKey{}).(uuid.UUID)
+	if !ok {
+		return nil, errors.New("failed to get user id")
+	}
+	id, err := uuid.Parse(orderID)
+	if err != nil {
+		return nil, err
+	}
+	err = s.repo.WithinTx(ctx, func(c context.Context) error {
+		return s.repo.CancelOrder(c, userID, id)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &orderv1.CancelOrderResponse{
+		Status: string(db.OrderStatusCancelled),
+	}, nil
+}
+
 func (s *Service) calculateTotalPrice(params []*orderv1.OrderItem) float64 {
 	var totalPrice float32
 	for _, item := range params {
@@ -120,10 +141,12 @@ func (s *Service) buildItems(params *orderv1.CreateOrderRequest) []dbresp.OrderI
 	return res
 }
 
-func (s *Service) buildResponseItems(items []dbresp.Orders) []*orderv1.FetchOrdersResponse {
-	res := make([]*orderv1.FetchOrdersResponse, 0, len(items))
+func (s *Service) buildResponseItems(items []dbresp.Orders) *orderv1.FetchOrdersResponse {
+	res := &orderv1.FetchOrdersResponse{
+		Orders: make([]*orderv1.Order, 0, len(items)),
+	}
 	for _, item := range items {
-		res = append(res, &orderv1.FetchOrdersResponse{
+		res.Orders = append(res.Orders, &orderv1.Order{
 			OrderId:    item.OrderID.String(),
 			Status:     item.Status,
 			TotalPrice: float32(item.TotalPrice),
@@ -133,7 +156,11 @@ func (s *Service) buildResponseItems(items []dbresp.Orders) []*orderv1.FetchOrde
 }
 
 func (s *Service) buildResponseItem(queryRes *dbresp.FetchOrder) *orderv1.FetchOrderResponse {
-	response := &orderv1.FetchOrderResponse{}
+	response := &orderv1.FetchOrderResponse{
+		Items:     make([]*orderv1.OrderItem, 0, len(queryRes.Items)),
+		Status:    queryRes.Status,
+		CreatedAt: queryRes.CreatedAt.String(),
+	}
 	for _, item := range queryRes.Items {
 		response.Items = append(response.Items, &orderv1.OrderItem{
 			Name:     item.Name,
@@ -141,7 +168,5 @@ func (s *Service) buildResponseItem(queryRes *dbresp.FetchOrder) *orderv1.FetchO
 			Price:    float32(item.Price),
 		})
 	}
-	response.Status = queryRes.Status
-	response.CreatedAt = queryRes.CreatedAt.String()
 	return response
 }
