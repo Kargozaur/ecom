@@ -9,6 +9,8 @@ import (
 	"order/types"
 	orderv1 "proto/out/order/v1"
 	"uuid"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type Service struct {
@@ -65,6 +67,14 @@ func (s *Service) CreateOrder(ctx context.Context, params *orderv1.CreateOrderRe
 		if err != nil {
 			return err
 		}
+		id, err := uuid.Parse(v.ID)
+		if err != nil {
+			return err
+		}
+		err = s.repo.CreateEvent(c, id)
+		if err != nil {
+			return err
+		}
 		txRes = v
 		return nil
 	})
@@ -77,8 +87,11 @@ func (s *Service) CreateOrder(ctx context.Context, params *orderv1.CreateOrderRe
 	response := &orderv1.CreateOrderResponse{
 		OrderId: txRes.ID,
 		Status:  txRes.Status,
-		Message: "order created successfully",
 	}
+	go func() {
+		body, _ := proto.Marshal(response)
+		s.proc.Append([]byte(txRes.ID), body)
+	}()
 	return response, nil
 }
 

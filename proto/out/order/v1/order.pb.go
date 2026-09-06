@@ -77,7 +77,6 @@ type CreateOrderResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -122,13 +121,6 @@ func (x *CreateOrderResponse) GetOrderId() string {
 func (x *CreateOrderResponse) GetStatus() string {
 	if x != nil {
 		return x.Status
-	}
-	return ""
-}
-
-func (x *CreateOrderResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
 	}
 	return ""
 }
@@ -440,11 +432,10 @@ const file_order_v1_order_proto_rawDesc = "" +
 	"\x14order/v1/order.proto\x12\border.v1\"U\n" +
 	"\x12CreateOrderRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12)\n" +
-	"\x05items\x18\x02 \x03(\v2\x13.order.v1.OrderItemR\x05items\"b\n" +
+	"\x05items\x18\x02 \x03(\v2\x13.order.v1.OrderItemR\x05items\"H\n" +
 	"\x13CreateOrderResponse\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"j\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"j\n" +
 	"\tOrderItem\x12\x17\n" +
 	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +

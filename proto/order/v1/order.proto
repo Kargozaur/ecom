@@ -17,7 +17,6 @@ message CreateOrderRequest {
 message CreateOrderResponse {
     string order_id = 1;
     string status = 2;
-    string message = 3;
 }
 
 message OrderItem {
