@@ -22,6 +22,7 @@ const (
 	OrderService_CreateOrder_FullMethodName = "/order.v1.OrderService/CreateOrder"
 	OrderService_FetchOrder_FullMethodName  = "/order.v1.OrderService/FetchOrder"
 	OrderService_FetchOrders_FullMethodName = "/order.v1.OrderService/FetchOrders"
+	OrderService_CancelOrder_FullMethodName = "/order.v1.OrderService/CancelOrder"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -31,6 +32,7 @@ type OrderServiceClient interface {
 	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*CreateOrderResponse, error)
 	FetchOrder(ctx context.Context, in *FetchOrderRequest, opts ...grpc.CallOption) (*FetchOrderResponse, error)
 	FetchOrders(ctx context.Context, in *FetchOrdersRequest, opts ...grpc.CallOption) (*FetchOrdersResponse, error)
+	CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error)
 }
 
 type orderServiceClient struct {
@@ -71,6 +73,16 @@ func (c *orderServiceClient) FetchOrders(ctx context.Context, in *FetchOrdersReq
 	return out, nil
 }
 
+func (c *orderServiceClient) CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*CancelOrderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelOrderResponse)
+	err := c.cc.Invoke(ctx, OrderService_CancelOrder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type OrderServiceServer interface {
 	CreateOrder(context.Context, *CreateOrderRequest) (*CreateOrderResponse, error)
 	FetchOrder(context.Context, *FetchOrderRequest) (*FetchOrderResponse, error)
 	FetchOrders(context.Context, *FetchOrdersRequest) (*FetchOrdersResponse, error)
+	CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedOrderServiceServer) FetchOrder(context.Context, *FetchOrderRe
 }
 func (UnimplementedOrderServiceServer) FetchOrders(context.Context, *FetchOrdersRequest) (*FetchOrdersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method FetchOrders not implemented")
+}
+func (UnimplementedOrderServiceServer) CancelOrder(context.Context, *CancelOrderRequest) (*CancelOrderResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CancelOrder not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 func (UnimplementedOrderServiceServer) testEmbeddedByValue()                      {}
@@ -172,6 +188,24 @@ func _OrderService_FetchOrders_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).CancelOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_CancelOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).CancelOrder(ctx, req.(*CancelOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FetchOrders",
 			Handler:    _OrderService_FetchOrders_Handler,
+		},
+		{
+			MethodName: "CancelOrder",
+			Handler:    _OrderService_CancelOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
