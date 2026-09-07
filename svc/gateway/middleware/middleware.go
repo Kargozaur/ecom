@@ -8,15 +8,15 @@ import (
 	"strings"
 )
 
-type middleware struct {
+type Middleware struct {
 	validator token.ITokenValidator
 }
 
-func NewMiddleware(validator token.ITokenValidator) *middleware {
-	return &middleware{validator: validator}
+func NewMiddleware(validator token.ITokenValidator) *Middleware {
+	return &Middleware{validator: validator}
 }
 
-func (m *middleware) SetToken(next http.Handler) http.HandlerFunc {
+func (m *Middleware) SetToken(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var jwtToken string
 		if cookie, err := r.Cookie("access_token"); err == nil {
@@ -39,7 +39,7 @@ func (m *middleware) SetToken(next http.Handler) http.HandlerFunc {
 	})
 }
 
-func (m *middleware) SetUserID(next http.Handler) http.HandlerFunc {
+func (m *Middleware) SetUserID(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cl := r.Context().Value(types.TokenKey)
 		jwtToken, ok := cl.(string)
