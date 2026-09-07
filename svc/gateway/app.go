@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"pkg/token"
+	orderv1 "proto/out/order/v1"
 	userv1 "proto/out/user/v1"
 	"time"
 )
@@ -20,6 +21,7 @@ func srvConfig(clients *Conns) *http.Server {
 	pwdPolicies := CreatePasswordPolicies()
 	mw := middleware.NewMiddleware(validator)
 	handlers.RegisterUserHandler(mux, userv1.NewUserServiceClient(clients.userConn), pwdPolicies, mw)
+	handlers.RegisterOrderHandler(mux, orderv1.NewOrderServiceClient(clients.orderConn), mw)
 	health.Health(mux)
 	timeoutHandler := http.TimeoutHandler(mux, 10*time.Second, "Request timed out")
 	srv := &http.Server{
