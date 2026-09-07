@@ -5,6 +5,9 @@ import (
 	"errors"
 	"log"
 	"net"
+	"pkg/envreader"
+	userv1 "proto/out/user/v1"
+	"reg/server"
 	"sync"
 	"time"
 
@@ -16,6 +19,25 @@ type App struct {
 	pool       *pgxpool.Pool
 	listener   net.Listener
 	grpcServer *grpc.Server
+}
+
+func initDB(ctx context.Context) (*pgxpool.Pool, error) {
+	url := envreader.Read("DB_URL", "postgres://postgres:1234@localhost:5433/user_db?sslmode=disable&pool_max_conn=10")
+	pool, err := pgxpool.New(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	return pool, nil
+}
+
+func initServer(pool *pgxpool.Pool) (*grpc.Server, error) {
+	srv, err := server.NewGRPCServer(pool)
+	if err != nil {
+		return nil, err
+	}
+	grpcServer := grpc.NewServer()
+	userv1.RegisterUserServiceServer(grpcServer, srv)
+	return grpcServer, nil
 }
 
 func NewApp(ctx context.Context, addr string) (*App, error) {

@@ -6,7 +6,11 @@ import (
 	"log"
 	"net"
 	processor "order/event_processor"
+	"order/interceptor"
+	"order/server"
+	"pkg/envreader"
 	"pkg/token"
+	orderv1 "proto/out/order/v1"
 	"sync"
 	"time"
 
@@ -19,6 +23,26 @@ type App struct {
 	listener   net.Listener
 	grpcServer *grpc.Server
 	proc       *processor.Processor
+}
+
+func initDB(ctx context.Context) (*pgxpool.Pool, error) {
+	url := envreader.Read("ORDER_DB", "postgres://postgres:1234@localhost:5433/order_db?sslmode=disable&pool_max_conn=10")
+	pool, err := pgxpool.New(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	return pool, nil
+}
+
+func initServer(pool *pgxpool.Pool, proc *processor.Processor) *grpc.Server {
+	validator, err := newTokenValidator()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptor.TokenInterceptor(validator)))
+	srv := server.NewGRPCServer(pool, proc)
+	orderv1.RegisterOrderServiceServer(grpcServer, srv)
+	return grpcServer
 }
 
 func newTokenValidator() (*token.TokenValidator, error) {
