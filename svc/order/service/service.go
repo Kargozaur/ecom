@@ -150,6 +150,7 @@ func (s *Service) buildResponseItems(items []dbresp.Orders) *orderv1.FetchOrders
 			OrderId:    item.OrderID.String(),
 			Status:     item.Status,
 			TotalPrice: float32(item.TotalPrice),
+			CreatedAt:  item.CreatedAt.String(),
 		})
 	}
 	return res
@@ -157,9 +158,10 @@ func (s *Service) buildResponseItems(items []dbresp.Orders) *orderv1.FetchOrders
 
 func (s *Service) buildResponseItem(queryRes *dbresp.FetchOrder) *orderv1.FetchOrderResponse {
 	response := &orderv1.FetchOrderResponse{
-		Items:     make([]*orderv1.OrderItem, 0, len(queryRes.Items)),
-		Status:    queryRes.Status,
-		CreatedAt: queryRes.CreatedAt.String(),
+		Items:      make([]*orderv1.OrderItem, 0, len(queryRes.Items)),
+		TotalPrice: float32(queryRes.TotalPrice),
+		Status:     queryRes.Status,
+		CreatedAt:  queryRes.CreatedAt.String(),
 	}
 	for _, item := range queryRes.Items {
 		response.Items = append(response.Items, &orderv1.OrderItem{

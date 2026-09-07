@@ -248,8 +248,9 @@ func (x *FetchOrderRequest) GetOrderId() string {
 type FetchOrderResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	Items         []*OrderItem           `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
+	TotalPrice    float32                `protobuf:"fixed32,2,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Items         []*OrderItem           `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -291,6 +292,13 @@ func (x *FetchOrderResponse) GetStatus() string {
 	return ""
 }
 
+func (x *FetchOrderResponse) GetTotalPrice() float32 {
+	if x != nil {
+		return x.TotalPrice
+	}
+	return 0
+}
+
 func (x *FetchOrderResponse) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
@@ -308,8 +316,7 @@ func (x *FetchOrderResponse) GetItems() []*OrderItem {
 type FetchOrdersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	OrderId       string                 `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
+	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -347,13 +354,6 @@ func (*FetchOrdersRequest) Descriptor() ([]byte, []int) {
 func (x *FetchOrdersRequest) GetToken() string {
 	if x != nil {
 		return x.Token
-	}
-	return ""
-}
-
-func (x *FetchOrdersRequest) GetOrderId() string {
-	if x != nil {
-		return x.OrderId
 	}
 	return ""
 }
@@ -414,6 +414,7 @@ type Order struct {
 	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	TotalPrice    float32                `protobuf:"fixed32,3,opt,name=total_price,json=totalPrice,proto3" json:"total_price,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -467,6 +468,13 @@ func (x *Order) GetTotalPrice() float32 {
 		return x.TotalPrice
 	}
 	return 0
+}
+
+func (x *Order) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
 }
 
 type CancelOrderRequest struct {
@@ -583,23 +591,26 @@ const file_order_v1_order_proto_rawDesc = "" +
 	"\x05price\x18\x04 \x01(\x02R\x05price\"D\n" +
 	"\x11FetchOrderRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x19\n" +
-	"\border_id\x18\x02 \x01(\tR\aorderId\"v\n" +
+	"\border_id\x18\x02 \x01(\tR\aorderId\"\x97\x01\n" +
 	"\x12FetchOrderResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12\x1d\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x1f\n" +
+	"\vtotal_price\x18\x02 \x01(\x02R\n" +
+	"totalPrice\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x02 \x01(\tR\tcreatedAt\x12)\n" +
-	"\x05items\x18\x03 \x03(\v2\x13.order.v1.OrderItemR\x05items\"Y\n" +
+	"created_at\x18\x03 \x01(\tR\tcreatedAt\x12)\n" +
+	"\x05items\x18\x04 \x03(\v2\x13.order.v1.OrderItemR\x05items\">\n" +
 	"\x12FetchOrdersRequest\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\x12\x19\n" +
-	"\border_id\x18\x02 \x01(\tR\aorderId\x12\x12\n" +
-	"\x04page\x18\x03 \x01(\x05R\x04page\">\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x12\n" +
+	"\x04page\x18\x02 \x01(\x05R\x04page\">\n" +
 	"\x13FetchOrdersResponse\x12'\n" +
-	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders\"[\n" +
+	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders\"z\n" +
 	"\x05Order\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x1f\n" +
 	"\vtotal_price\x18\x03 \x01(\x02R\n" +
-	"totalPrice\"E\n" +
+	"totalPrice\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\tR\tcreatedAt\"E\n" +
 	"\x12CancelOrderRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\tR\aorderId\"-\n" +
