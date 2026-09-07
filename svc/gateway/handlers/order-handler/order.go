@@ -5,6 +5,7 @@ import (
 	"errors"
 	orderstructs "gateway/handlers/order-handler/order-structs"
 	"gateway/types"
+	"gateway/util"
 	"net/http"
 	"pkg/json"
 	orderv1 "proto/out/order/v1"
@@ -29,6 +30,11 @@ func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	orderID := r.PathValue("id")
+	ok = util.IsValidUUID(orderID)
+	if !ok {
+		http.Error(w, "invalid order id", http.StatusBadRequest)
+		return
+	}
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
 	defer cancel()
 	res, err := h.client.FetchOrder(ctx, &orderv1.FetchOrderRequest{
@@ -107,6 +113,11 @@ func (h *Handler) CancelOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	orderID := r.PathValue("id")
+	ok = util.IsValidUUID(orderID)
+	if !ok {
+		http.Error(w, "invalid order id", http.StatusBadRequest)
+		return
+	}
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
 	defer cancel()
 	_, err := h.client.CancelOrder(ctx, &orderv1.CancelOrderRequest{
