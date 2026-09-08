@@ -30,8 +30,7 @@ func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	orderID := r.PathValue("id")
-	ok = util.IsValidUUID(orderID)
-	if !ok {
+	if !util.IsValidUUID(orderID) {
 		http.Error(w, "invalid order id", http.StatusBadRequest)
 		return
 	}
@@ -102,8 +101,8 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 			Status:    order.Status,
 			CreatedAt: order.CreatedAt,
 		})
-		json.Write(w, http.StatusOK, &resp)
 	}
+	json.Write(w, http.StatusOK, &resp)
 }
 
 func (h *Handler) CancelOrder(w http.ResponseWriter, r *http.Request) {
@@ -113,8 +112,7 @@ func (h *Handler) CancelOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	orderID := r.PathValue("id")
-	ok = util.IsValidUUID(orderID)
-	if !ok {
+	if !util.IsValidUUID(orderID) {
 		http.Error(w, "invalid order id", http.StatusBadRequest)
 		return
 	}
