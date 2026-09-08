@@ -11,10 +11,10 @@ import (
 	"pkg/envreader"
 	"pkg/token"
 	orderv1 "proto/out/order/v1"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )
 
@@ -83,32 +83,30 @@ func (a *App) Close() error {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
-	wg.Add(2)
-	var grpcErr error
-	go func() {
-		defer wg.Done()
-		a.proc.Run(ctx)
-	}()
-	go func() {
-		defer wg.Done()
-		if err := a.grpcServer.Serve(a.listener); err != nil {
-			grpcErr = err
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return a.grpcServer.Serve(a.listener)
+	})
+	g.Go(func() error {
+		a.proc.Run(gctx)
+		return nil
+	})
+	g.Go(func() error {
+		<-gctx.Done()
+		stopped := make(chan struct{})
+		go func() {
+			a.grpcServer.GracefulStop()
+			close(stopped)
+		}()
+		select {
+		case <-stopped:
+		case <-time.After(time.Second * 10):
+			log.Println("enforced server stop")
+			a.grpcServer.Stop()
 		}
-	}()
-	<-ctx.Done()
-	stopped := make(chan struct{})
-	go func() {
-		a.grpcServer.GracefulStop()
-		close(stopped)
-	}()
-	select {
-	case <-stopped:
-	case <-time.After(10 * time.Second):
-		log.Println("enforced server shutdown")
-		a.grpcServer.Stop()
-	}
-
-	wg.Wait()
-	return grpcErr
+		return nil
+	})
+	return g.Wait()
 }

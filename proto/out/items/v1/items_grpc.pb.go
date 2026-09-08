@@ -19,9 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ItemsService_GetItem_FullMethodName     = "/items.v1.ItemsService/GetItem"
-	ItemsService_GetItemInfo_FullMethodName = "/items.v1.ItemsService/GetItemInfo"
-	ItemsService_GetItems_FullMethodName    = "/items.v1.ItemsService/GetItems"
+	ItemsService_GetItem_FullMethodName  = "/items.v1.ItemsService/GetItem"
+	ItemsService_GetItems_FullMethodName = "/items.v1.ItemsService/GetItems"
 )
 
 // ItemsServiceClient is the client API for ItemsService service.
@@ -29,7 +28,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ItemsServiceClient interface {
 	GetItem(ctx context.Context, in *GetItemRequest, opts ...grpc.CallOption) (*GetItemResponse, error)
-	GetItemInfo(ctx context.Context, in *GetItemInfoRequest, opts ...grpc.CallOption) (*GetItemInfoResponse, error)
 	GetItems(ctx context.Context, in *GetItemsRequest, opts ...grpc.CallOption) (*GetItemsResponse, error)
 }
 
@@ -51,16 +49,6 @@ func (c *itemsServiceClient) GetItem(ctx context.Context, in *GetItemRequest, op
 	return out, nil
 }
 
-func (c *itemsServiceClient) GetItemInfo(ctx context.Context, in *GetItemInfoRequest, opts ...grpc.CallOption) (*GetItemInfoResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetItemInfoResponse)
-	err := c.cc.Invoke(ctx, ItemsService_GetItemInfo_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *itemsServiceClient) GetItems(ctx context.Context, in *GetItemsRequest, opts ...grpc.CallOption) (*GetItemsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetItemsResponse)
@@ -76,7 +64,6 @@ func (c *itemsServiceClient) GetItems(ctx context.Context, in *GetItemsRequest, 
 // for forward compatibility.
 type ItemsServiceServer interface {
 	GetItem(context.Context, *GetItemRequest) (*GetItemResponse, error)
-	GetItemInfo(context.Context, *GetItemInfoRequest) (*GetItemInfoResponse, error)
 	GetItems(context.Context, *GetItemsRequest) (*GetItemsResponse, error)
 	mustEmbedUnimplementedItemsServiceServer()
 }
@@ -90,9 +77,6 @@ type UnimplementedItemsServiceServer struct{}
 
 func (UnimplementedItemsServiceServer) GetItem(context.Context, *GetItemRequest) (*GetItemResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetItem not implemented")
-}
-func (UnimplementedItemsServiceServer) GetItemInfo(context.Context, *GetItemInfoRequest) (*GetItemInfoResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetItemInfo not implemented")
 }
 func (UnimplementedItemsServiceServer) GetItems(context.Context, *GetItemsRequest) (*GetItemsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetItems not implemented")
@@ -136,24 +120,6 @@ func _ItemsService_GetItem_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ItemsService_GetItemInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetItemInfoRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ItemsServiceServer).GetItemInfo(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ItemsService_GetItemInfo_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemsServiceServer).GetItemInfo(ctx, req.(*GetItemInfoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ItemsService_GetItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetItemsRequest)
 	if err := dec(in); err != nil {
@@ -182,10 +148,6 @@ var ItemsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetItem",
 			Handler:    _ItemsService_GetItem_Handler,
-		},
-		{
-			MethodName: "GetItemInfo",
-			Handler:    _ItemsService_GetItemInfo_Handler,
 		},
 		{
 			MethodName: "GetItems",

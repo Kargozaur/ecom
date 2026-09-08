@@ -5,7 +5,6 @@ option go_package = "proto/out/items/v1;itemsv1";
 
 service ItemsService {
     rpc GetItem(GetItemRequest) returns (GetItemResponse);
-    rpc GetItemInfo(GetItemInfoRequest) returns (GetItemInfoResponse);
     rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
 }
 
@@ -19,13 +18,6 @@ message GetItemResponse {
     string description = 3;
 }
 
-message GetItemInfoRequest {
-    string item_id = 1;
-}
-
-message GetItemInfoResponse {
-    Item item = 1;
-}
 
 message GetItemsRequest {
     repeated string categories = 1;

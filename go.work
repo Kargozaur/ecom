@@ -4,6 +4,7 @@ use (
 	./pkg
 	./proto
 	./svc/gateway
+	./svc/items
 	./svc/order
 	./svc/reg
 )
