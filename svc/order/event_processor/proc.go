@@ -48,16 +48,18 @@ func (p *Processor) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			shutdownCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
-			if err := p.write(shutdownCtx); err != nil {
-				if errors.Is(err, broker.ErrNoMessages) {
-					log.Println("no messages to send")
+			for {
+				if err := p.write(shutdownCtx); err != nil {
+					if errors.Is(err, broker.ErrNoMessages) {
+						log.Println("no messages to send")
+						return
+					}
+					log.Printf("failed to send message: %s\n", err.Error())
 					return
 				}
-				log.Printf("failed to send message: %s\n", err.Error())
 			}
-			return
 		case <-ticker.C:
 			if err := p.write(ctx); err != nil {
 				if errors.Is(err, broker.ErrNoMessages) {
