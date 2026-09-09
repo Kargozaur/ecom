@@ -18,11 +18,11 @@ create table if not exists order_items (
     foreign key (order_id) references orders(id) on delete cascade,
     primary key (order_id, item_id)
 );
-create type event_type as enum ('payment_completed', 'payment_pending', 'payment_failed', 'payment_chargedback');
+create type event_type as enum ('unsent', 'sent', 'completed', 'failed', 'chargedback');
 create table if not exists events (
     id uuid primary key default uuidv7(),
     order_id uuid not null,
-    event_type event_type not null,
+    event_type event_type not null default 'unsent',
     created_at timestamp not null default (now() at time zone 'UTC'),
     updated_at timestamp not null default (now() at time zone 'UTC')
 );

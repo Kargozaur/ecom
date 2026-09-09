@@ -11,12 +11,12 @@ values ($1, $2)
 returning id, total_price, status;
 
 -- name: CreateEvent :exec
-insert into events(order_id, event_type)
-values ($1, $2);
+insert into events(order_id)
+values ($1);
 
 -- name: SelectEventForUpdate :many
 select id, event_type from events
-where event_type = 'payment_pending'
+where event_type = 'unsent'
 order by created_at
 limit $1
 for update skip locked;

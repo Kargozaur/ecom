@@ -28,17 +28,12 @@ func (q *Queries) CancelOrder(ctx context.Context, arg CancelOrderParams) error 
 }
 
 const createEvent = `-- name: CreateEvent :exec
-insert into events(order_id, event_type)
-values ($1, $2)
+insert into events(order_id)
+values ($1)
 `
 
-type CreateEventParams struct {
-	OrderID   pgtype.UUID
-	EventType EventType
-}
-
-func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error {
-	_, err := q.db.Exec(ctx, createEvent, arg.OrderID, arg.EventType)
+func (q *Queries) CreateEvent(ctx context.Context, orderID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, createEvent, orderID)
 	return err
 }
 
@@ -191,7 +186,7 @@ func (q *Queries) FetchUserOrders(ctx context.Context, arg FetchUserOrdersParams
 
 const selectEventForUpdate = `-- name: SelectEventForUpdate :many
 select id, event_type from events
-where event_type = 'payment_pending'
+where event_type = 'unsent'
 order by created_at
 limit $1
 for update skip locked

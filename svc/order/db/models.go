@@ -14,10 +14,11 @@ import (
 type EventType string
 
 const (
-	EventTypePaymentCompleted   EventType = "payment_completed"
-	EventTypePaymentPending     EventType = "payment_pending"
-	EventTypePaymentFailed      EventType = "payment_failed"
-	EventTypePaymentChargedback EventType = "payment_chargedback"
+	EventTypeUnsent      EventType = "unsent"
+	EventTypeSent        EventType = "sent"
+	EventTypeCompleted   EventType = "completed"
+	EventTypeFailed      EventType = "failed"
+	EventTypeChargedback EventType = "chargedback"
 )
 
 func (e *EventType) Scan(src interface{}) error {

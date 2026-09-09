@@ -133,10 +133,7 @@ func (o *orderItemsRepo) insertOrderItems(ctx context.Context, queries *db.Queri
 }
 
 func (e *eventRepo) CreateEvent(ctx context.Context, queries *db.Queries, orderID uuid.UUID) error {
-	return queries.CreateEvent(ctx, db.CreateEventParams{
-		OrderID:   pgtype.UUID{Bytes: orderID, Valid: true},
-		EventType: db.EventTypePaymentPending,
-	})
+	return queries.CreateEvent(ctx, pgtype.UUID{Bytes: orderID, Valid: true})
 
 }
 
@@ -152,7 +149,7 @@ func (e *eventRepo) UpdateEvent(ctx context.Context, queries *db.Queries, limit 
 	for _, row := range rows {
 		in = append(in, db.UpdateEventParams{
 			ID:        row.ID,
-			EventType: db.EventTypePaymentCompleted,
+			EventType: db.EventTypeSent,
 		})
 	}
 	if res := queries.UpdateEvent(ctx, in); res == nil {
