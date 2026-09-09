@@ -23,10 +23,11 @@ create table if not exists events (
     id uuid primary key default uuidv7(),
     order_id uuid not null,
     event_type event_type not null default 'unsent',
+    event_key uuid,
     created_at timestamp not null default (now() at time zone 'UTC'),
     updated_at timestamp not null default (now() at time zone 'UTC')
 );
-create index if not exists idx_events_comp_events_status_created_at on events(status, created_at);
+create index if not exists idx_events_event_key on events(event_key) where event_key is not null;
 create index if not exists idx_order_items_order_id on order_items(order_id);
 create index if not exists idx_orders_user_id on orders(user_id);
 -- +goose StatementEnd

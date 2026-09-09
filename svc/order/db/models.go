@@ -104,6 +104,7 @@ type Event struct {
 	ID        pgtype.UUID
 	OrderID   pgtype.UUID
 	EventType EventType
+	EventKey  pgtype.UUID
 	CreatedAt pgtype.Timestamp
 	UpdatedAt pgtype.Timestamp
 }

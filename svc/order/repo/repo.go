@@ -105,10 +105,10 @@ func (r *Repo) CreateEvent(ctx context.Context, orderID uuid.UUID) error {
 	return nil
 }
 
-func (r *Repo) UpdateEvent(ctx context.Context, limit int32) error {
-	err := r.eventRepo.UpdateEvent(ctx, r.querier(ctx), limit)
+func (r *Repo) UpdateEvent(ctx context.Context, limit int32) ([]db.UpdateEventParams, uuid.UUID, error) {
+	in, key, err := r.eventRepo.SelectEventsForUpdate(ctx, r.querier(ctx), limit)
 	if err != nil {
-		return err
+		return nil, uuid.UUID{}, err
 	}
-	return nil
+	return in, key, nil
 }

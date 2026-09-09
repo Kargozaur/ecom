@@ -137,21 +137,27 @@ func (e *eventRepo) CreateEvent(ctx context.Context, queries *db.Queries, orderI
 
 }
 
-func (e *eventRepo) UpdateEvent(ctx context.Context, queries *db.Queries, limit int32) error {
+func (e *eventRepo) SelectEventsForUpdate(ctx context.Context, queries *db.Queries, limit int32) ([]db.UpdateEventParams, uuid.UUID, error) {
 	rows, err := queries.SelectEventForUpdate(ctx, limit)
 	if err != nil {
-		return err
+		return nil, uuid.UUID{}, err
 	}
 	if len(rows) == 0 {
-		return nil
+		return nil, uuid.UUID{}, nil
 	}
 	in := make([]db.UpdateEventParams, len(rows))
+	key := uuid.NewV7()
 	for _, row := range rows {
 		in = append(in, db.UpdateEventParams{
 			ID:        row.ID,
 			EventType: db.EventTypeSent,
+			EventKey:  pgtype.UUID{Bytes: key, Valid: true},
 		})
 	}
+	return in, key, nil
+}
+
+func (e *eventRepo) UpdateEvent(ctx context.Context, queries *db.Queries, in []db.UpdateEventParams) error {
 	if res := queries.UpdateEvent(ctx, in); res == nil {
 		return errors.New("failed to update events")
 	}

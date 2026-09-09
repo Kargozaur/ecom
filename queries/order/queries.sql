@@ -23,7 +23,7 @@ for update skip locked;
 
 -- name: UpdateEvent :batchexec
 update events
-set event_type = $2
+set event_type = $2, event_key = $3
 where id = $1;
 
 -- name: CreateOrderItems :exec

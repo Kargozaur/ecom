@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"order/db"
 	processor "order/event_processor"
@@ -10,9 +11,16 @@ import (
 	"order/types"
 	orderv1 "proto/out/order/v1"
 	"uuid"
-
-	"google.golang.org/protobuf/proto"
 )
+
+type m struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
+}
+
+type res struct {
+	Values []m `json:"values"`
+}
 
 type Service struct {
 	repo *repo.Repo
@@ -89,10 +97,6 @@ func (s *Service) CreateOrder(ctx context.Context, params *orderv1.CreateOrderRe
 		OrderId: txRes.ID,
 		Status:  txRes.Status,
 	}
-	go func() {
-		body, _ := proto.Marshal(response)
-		s.proc.Append([]byte(txRes.ID), body)
-	}()
 	return response, nil
 }
 
@@ -139,6 +143,31 @@ func (s *Service) buildItems(params *orderv1.CreateOrderRequest) []dbresp.OrderI
 		})
 	}
 	return res
+}
+
+func (s *Service) SendToBroker(ctx context.Context) {
+	r := res{Values: make([]m, 0, 80)}
+	err := s.repo.WithinTx(ctx, func(c context.Context) error {
+		rows, key, err := s.repo.UpdateEvent(c, 80)
+		if err != nil {
+			return err
+		}
+		for _, row := range rows {
+			r.Values = append(r.Values, m{
+				ID:     row.ID.String(),
+				Status: row.EventKey.String(),
+			})
+		}
+		body, err := json.Marshal(&r)
+		if err != nil {
+			return err
+		}
+		s.proc.Append(key[:], body)
+		return nil
+	})
+	if err != nil {
+		return
+	}
 }
 
 func (s *Service) buildResponseItems(items []dbresp.Orders) *orderv1.FetchOrdersResponse {

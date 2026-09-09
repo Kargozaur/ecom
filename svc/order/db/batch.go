@@ -19,7 +19,7 @@ var (
 
 const updateEvent = `-- name: UpdateEvent :batchexec
 update events
-set event_type = $2
+set event_type = $2, event_key = $3
 where id = $1
 `
 
@@ -32,6 +32,7 @@ type UpdateEventBatchResults struct {
 type UpdateEventParams struct {
 	ID        pgtype.UUID
 	EventType EventType
+	EventKey  pgtype.UUID
 }
 
 func (q *Queries) UpdateEvent(ctx context.Context, arg []UpdateEventParams) *UpdateEventBatchResults {
@@ -40,6 +41,7 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg []UpdateEventParams) *Upd
 		vals := []interface{}{
 			a.ID,
 			a.EventType,
+			a.EventKey,
 		}
 		batch.Queue(updateEvent, vals...)
 	}

@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"log"
+	"order/repo"
 	"pkg/broker"
 	"pkg/envreader"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Processor struct {
@@ -15,9 +18,10 @@ type Processor struct {
 	rd   *broker.Reader
 	th   chan struct{}
 	done chan struct{}
+	repo *repo.Repo
 }
 
-func NewProcessor() *Processor {
+func NewProcessor(pool *pgxpool.Pool) *Processor {
 	readerTopic := envreader.Read("ORDER_READER", "payments")
 	brokers := envreader.Read("KAFKA_BROKERS", "")
 	if brokers == "" {
@@ -38,6 +42,7 @@ func NewProcessor() *Processor {
 		wr:   wr,
 		th:   make(chan struct{}, 1),
 		done: make(chan struct{}),
+		repo: repo.NewRepo(pool),
 	}
 }
 
@@ -76,10 +81,6 @@ func (p *Processor) Run(ctx context.Context) {
 	}
 }
 
-func (p *Processor) write(ctx context.Context) error {
-	return p.wr.WriteMessage(ctx)
-}
-
 func (p *Processor) Append(key, value []byte) {
 	p.wr.AddMessage(key, value)
 	if p.wr.Len() >= p.wr.MaxLen() {
@@ -88,6 +89,10 @@ func (p *Processor) Append(key, value []byte) {
 		default:
 		}
 	}
+}
+
+func (p *Processor) write(ctx context.Context) error {
+	return p.wr.WriteMessage(ctx)
 }
 
 func (p *Processor) Close() error {
