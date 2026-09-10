@@ -64,7 +64,7 @@ func NewKafkaWriter(topic string, addr []string, maxMessages int32) (*Writer, er
 	}, nil
 }
 
-func (w *Writer) Increase() {
+func (w *Writer) increase() {
 	w.currMessages.Add(1)
 }
 
@@ -76,7 +76,7 @@ func (w *Writer) AddMessage(key, value []byte) {
 	w.mu.Lock()
 	w.messages = append(w.messages, &Message{Key: key, Value: value})
 	w.mu.Unlock()
-	w.Increase()
+	w.increase()
 }
 
 func (w *Writer) reduce(delta int32) {
