@@ -18,3 +18,12 @@ sql:
             package: "db"
             out: "./svc/order/db"
             sql_package: "pgx/v5"
+  - name: "items_service"
+    queries: "./queries/items/queries.sql"
+    engine: "postgresql"
+    schema: "./migrations/items/00001_items.sql"
+    gen:
+        go:
+            package: "db"
+            out: "./svc/items/db"
+            sql_package: "pgx/v5"

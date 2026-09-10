@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +14,6 @@ func main() {
 	app := NewApp(ctx)
 	defer app.Close()
 	if err := app.Run(ctx); err != nil {
-
+		log.Fatal(err.Error())
 	}
 }
