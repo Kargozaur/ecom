@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package order_events;
+option go_package = "proto/out/order_events/v1;orevents";
+
+message Event {
+    string event_id = 1;
+    string status = 2;
+}
+
+message Events {
+    repeated Event events = 1;
+}

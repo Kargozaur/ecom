@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -14,10 +15,11 @@ type Message struct {
 }
 
 type Writer struct {
-	writer      *kafka.Writer
-	messages    []*Message
-	mu          sync.RWMutex
-	maxMessages int
+	writer       *kafka.Writer
+	messages     []*Message
+	mu           sync.RWMutex
+	maxMessages  int32
+	currMessages atomic.Int32
 }
 
 type Reader struct {
@@ -41,7 +43,7 @@ func NewKafkaReader(topic string, brokers []string, partition int) (*Reader, err
 	}, nil
 }
 
-func NewKafkaWriter(topic string, addr []string, maxMessages int) (*Writer, error) {
+func NewKafkaWriter(topic string, addr []string, maxMessages int32) (*Writer, error) {
 	if len(addr) == 0 {
 		return nil, ErrNoBrokers
 	}
@@ -62,23 +64,30 @@ func NewKafkaWriter(topic string, addr []string, maxMessages int) (*Writer, erro
 	}, nil
 }
 
+func (w *Writer) Increase() {
+	w.currMessages.Add(1)
+}
+
+func (w *Writer) Len() int32 {
+	return w.currMessages.Load()
+}
+
 func (w *Writer) AddMessage(key, value []byte) {
 	w.mu.Lock()
 	w.messages = append(w.messages, &Message{Key: key, Value: value})
 	w.mu.Unlock()
+	w.Increase()
 }
 
-func (w *Writer) Len() int {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	return len(w.messages)
+func (w *Writer) Reset() {
+	w.currMessages.Swap(0)
 }
 
 func (w *Writer) clearLocked() {
 	w.messages = w.messages[:0]
 }
 
-func (w *Writer) MaxLen() int {
+func (w *Writer) MaxLen() int32 {
 	return w.maxMessages
 }
 
@@ -86,19 +95,23 @@ func (w *Writer) WriteMessage(ctx context.Context) error {
 	if w.Len() == 0 {
 		return ErrNoMessages
 	}
-	kafkaMsgs := make([]kafka.Message, len(w.messages))
+
 	w.mu.Lock()
-	defer w.mu.Unlock()
+	n := len(w.messages)
+	kafkaMsgs := make([]kafka.Message, n)
 	for i, m := range w.messages {
-		kafkaMsgs[i] = kafka.Message{
-			Key:   m.Key,
-			Value: m.Value,
-		}
+		kafkaMsgs[i] = kafka.Message{Key: m.Key, Value: m.Value}
 	}
+	w.mu.Unlock()
+
 	if err := w.writer.WriteMessages(ctx, kafkaMsgs...); err != nil {
 		return err
 	}
-	w.clearLocked()
+
+	w.mu.Lock()
+	w.messages = w.messages[n:]
+	w.mu.Unlock()
+	w.Reset()
 	return nil
 }
 

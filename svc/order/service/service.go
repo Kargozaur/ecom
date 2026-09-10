@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"order/db"
 	processor "order/event_processor"
@@ -13,21 +12,16 @@ import (
 	"uuid"
 )
 
-type m struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
-}
-
-type res struct {
-	Values []m `json:"values"`
+type Notifier interface {
+	Notify()
 }
 
 type Service struct {
 	repo *repo.Repo
-	proc *processor.Processor
+	proc processor.Notifier
 }
 
-func NewService(repo *repo.Repo, proc *processor.Processor) *Service {
+func NewService(repo *repo.Repo, proc processor.Notifier) *Service {
 	return &Service{repo: repo, proc: proc}
 }
 
@@ -143,31 +137,6 @@ func (s *Service) buildItems(params *orderv1.CreateOrderRequest) []dbresp.OrderI
 		})
 	}
 	return res
-}
-
-func (s *Service) SendToBroker(ctx context.Context) {
-	r := res{Values: make([]m, 0, 80)}
-	err := s.repo.WithinTx(ctx, func(c context.Context) error {
-		rows, key, err := s.repo.UpdateEvent(c, 80)
-		if err != nil {
-			return err
-		}
-		for _, row := range rows {
-			r.Values = append(r.Values, m{
-				ID:     row.ID.String(),
-				Status: row.EventKey.String(),
-			})
-		}
-		body, err := json.Marshal(&r)
-		if err != nil {
-			return err
-		}
-		s.proc.Append(key[:], body)
-		return nil
-	})
-	if err != nil {
-		return
-	}
 }
 
 func (s *Service) buildResponseItems(items []dbresp.Orders) *orderv1.FetchOrdersResponse {

@@ -7,11 +7,17 @@ import (
 	"order/repo"
 	"pkg/broker"
 	"pkg/envreader"
+	orevents "proto/out/events/v1"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/protobuf/proto"
 )
+
+type Notifier interface {
+	Notify()
+}
 
 type Processor struct {
 	wr   *broker.Writer
@@ -66,22 +72,25 @@ func (p *Processor) Run(ctx context.Context) {
 				}
 			}
 		case <-ticker.C:
-			if err := p.write(ctx); err != nil {
-				if errors.Is(err, broker.ErrNoMessages) {
-					log.Println("no messages to send")
-					continue
-				}
-				log.Printf("failed to send message: %s\n", err.Error())
-			}
+			p.handleWrite(ctx)
 		case <-p.th:
-			if err := p.write(ctx); err != nil {
-				log.Printf("failed to send message: %s\n", err.Error())
-			}
+			p.handleWrite(ctx)
+			ticker.Reset(time.Second * 30)
 		}
 	}
 }
 
-func (p *Processor) Append(key, value []byte) {
+func (p *Processor) handleWrite(ctx context.Context) {
+	if err := p.write(ctx); err != nil {
+		if errors.Is(err, broker.ErrNoMessages) {
+			log.Println("no messages to send")
+			return
+		}
+		log.Printf("failed to send message: %s\n", err.Error())
+	}
+}
+
+func (p *Processor) append(key, value []byte) {
 	p.wr.AddMessage(key, value)
 	if p.wr.Len() >= p.wr.MaxLen() {
 		select {
@@ -91,8 +100,42 @@ func (p *Processor) Append(key, value []byte) {
 	}
 }
 
+func (p *Processor) fillMessages(ctx context.Context) error {
+	r := &orevents.Events{
+		Events: make([]*orevents.Event, 0, 80),
+	}
+	err := p.repo.WithinTx(ctx, func(c context.Context) error {
+		rows, key, err := p.repo.UpdateEvent(c, 80)
+		if err != nil {
+			return err
+		}
+		for _, row := range rows {
+			r.Events = append(r.Events, &orevents.Event{
+				EventId: row.ID.String(),
+				Status:  row.EventKey.String(),
+			})
+		}
+		body, err := proto.Marshal(r)
+		if err != nil {
+			return err
+		}
+		p.append(key[:], body)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *Processor) write(ctx context.Context) error {
-	return p.wr.WriteMessage(ctx)
+	if err := p.fillMessages(ctx); err != nil {
+		return err
+	}
+	if err := p.wr.WriteMessage(ctx); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *Processor) Close() error {
@@ -100,4 +143,11 @@ func (p *Processor) Close() error {
 	<-p.done
 	wrErr := p.wr.Close()
 	return errors.Join(wrErr, rdErr)
+}
+
+func (p *Processor) Notify() {
+	select {
+	case p.th <- struct{}{}:
+	default:
+	}
 }
