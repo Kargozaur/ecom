@@ -79,7 +79,7 @@ func (w *Writer) AddMessage(key, value []byte) {
 	w.Increase()
 }
 
-func (w *Writer) Reset() {
+func (w *Writer) Reduce(delta int32) {
 	w.currMessages.Swap(0)
 }
 
@@ -111,7 +111,7 @@ func (w *Writer) WriteMessage(ctx context.Context) error {
 	w.mu.Lock()
 	w.messages = w.messages[n:]
 	w.mu.Unlock()
-	w.Reset()
+	w.Reduce(int32(-n))
 	return nil
 }
 
