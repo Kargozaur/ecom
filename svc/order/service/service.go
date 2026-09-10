@@ -12,17 +12,13 @@ import (
 	"uuid"
 )
 
-type Notifier interface {
-	Notify()
-}
-
 type Service struct {
-	repo *repo.Repo
-	proc processor.Notifier
+	repo     *repo.Repo
+	notifier processor.Notifier
 }
 
-func NewService(repo *repo.Repo, proc processor.Notifier) *Service {
-	return &Service{repo: repo, proc: proc}
+func NewService(repo *repo.Repo, notifier processor.Notifier) *Service {
+	return &Service{repo: repo, notifier: notifier}
 }
 
 func (s *Service) GetOrder(ctx context.Context, orderID string) (*orderv1.FetchOrderResponse, error) {
@@ -91,6 +87,7 @@ func (s *Service) CreateOrder(ctx context.Context, params *orderv1.CreateOrderRe
 		OrderId: txRes.ID,
 		Status:  txRes.Status,
 	}
+	s.notifier.Notify()
 	return response, nil
 }
 
