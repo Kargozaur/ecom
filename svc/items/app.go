@@ -28,9 +28,9 @@ func initDB(ctx context.Context) *pgxpool.Pool {
 	return pool
 }
 
-func initServer() *grpc.Server {
+func initServer(pool *pgxpool.Pool) *grpc.Server {
 	grpcServer := grpc.NewServer()
-	itemsv1.RegisterItemsServiceServer(grpcServer, server.NewGRPCServer())
+	itemsv1.RegisterItemsServiceServer(grpcServer, server.NewGRPCServer(pool))
 	return grpcServer
 }
 
@@ -41,7 +41,7 @@ func NewApp(ctx context.Context) *App {
 		pool.Close()
 		log.Fatal(err.Error())
 	}
-	grpcServer := initServer()
+	grpcServer := initServer(pool)
 	return &App{pool: pool, listener: listener, grpcServer: grpcServer}
 }
 

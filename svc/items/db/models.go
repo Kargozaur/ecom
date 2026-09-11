@@ -16,6 +16,7 @@ type Category struct {
 type Item struct {
 	ID          pgtype.UUID
 	Name        string
+	Price       pgtype.Numeric
 	Description pgtype.Text
 	Quantity    int32
 	CreatedAt   pgtype.Timestamptz

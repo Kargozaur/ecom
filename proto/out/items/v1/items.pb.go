@@ -67,9 +67,7 @@ func (x *GetItemRequest) GetItemId() string {
 
 type GetItemResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Price         float32                `protobuf:"fixed32,2,opt,name=price,proto3" json:"price,omitempty"`
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Item          *Item                  `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -104,25 +102,11 @@ func (*GetItemResponse) Descriptor() ([]byte, []int) {
 	return file_items_v1_items_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetItemResponse) GetName() string {
+func (x *GetItemResponse) GetItem() *Item {
 	if x != nil {
-		return x.Name
+		return x.Item
 	}
-	return ""
-}
-
-func (x *GetItemResponse) GetPrice() float32 {
-	if x != nil {
-		return x.Price
-	}
-	return 0
-}
-
-func (x *GetItemResponse) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
+	return nil
 }
 
 type GetItemsRequest struct {
@@ -311,11 +295,9 @@ const file_items_v1_items_proto_rawDesc = "" +
 	"\n" +
 	"\x14items/v1/items.proto\x12\bitems.v1\")\n" +
 	"\x0eGetItemRequest\x12\x17\n" +
-	"\aitem_id\x18\x01 \x01(\tR\x06itemId\"]\n" +
-	"\x0fGetItemResponse\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05price\x18\x02 \x01(\x02R\x05price\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\"_\n" +
+	"\aitem_id\x18\x01 \x01(\tR\x06itemId\"5\n" +
+	"\x0fGetItemResponse\x12\"\n" +
+	"\x04item\x18\x01 \x01(\v2\x0e.items.v1.ItemR\x04item\"_\n" +
 	"\x0fGetItemsRequest\x12\x1e\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\tR\n" +
@@ -357,16 +339,17 @@ var file_items_v1_items_proto_goTypes = []any{
 	(*Item)(nil),             // 4: items.v1.Item
 }
 var file_items_v1_items_proto_depIdxs = []int32{
-	4, // 0: items.v1.GetItemsResponse.items:type_name -> items.v1.Item
-	0, // 1: items.v1.ItemsService.GetItem:input_type -> items.v1.GetItemRequest
-	2, // 2: items.v1.ItemsService.GetItems:input_type -> items.v1.GetItemsRequest
-	1, // 3: items.v1.ItemsService.GetItem:output_type -> items.v1.GetItemResponse
-	3, // 4: items.v1.ItemsService.GetItems:output_type -> items.v1.GetItemsResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	4, // 0: items.v1.GetItemResponse.item:type_name -> items.v1.Item
+	4, // 1: items.v1.GetItemsResponse.items:type_name -> items.v1.Item
+	0, // 2: items.v1.ItemsService.GetItem:input_type -> items.v1.GetItemRequest
+	2, // 3: items.v1.ItemsService.GetItems:input_type -> items.v1.GetItemsRequest
+	1, // 4: items.v1.ItemsService.GetItem:output_type -> items.v1.GetItemResponse
+	3, // 5: items.v1.ItemsService.GetItems:output_type -> items.v1.GetItemsResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_items_v1_items_proto_init() }

@@ -7,6 +7,7 @@ create table if not exists categories(
 create table if not exists items (
     id uuid primary key,
     name text not null,
+    price numeric(10, 2) not null,
     description text,
     quantity int not null,
     created_at timestamptz default (now() at time zone 'UTC')
